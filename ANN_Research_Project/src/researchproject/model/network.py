@@ -81,7 +81,7 @@ class Network():
         self.num_inputs = num_inputs
         if num_hidden_neurons is None:
             # Note: For now, take the mean of the number of inputs and outputs
-            #    -THIS NEEDS TO BE CHANGED ---
+            #    -THIS NEEDS TO BE CHANGED
             num_hidden_neurons = round((2/3) * num_inputs)
         self.hidden_layer = Layer(num_hidden_neurons, num_inputs, activation_function)
         self.output_layer = Layer(num_output_neurons, num_hidden_neurons, activation_function)
