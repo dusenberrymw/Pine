@@ -24,51 +24,67 @@ class Backpropagation():
             values and add to each weight and threshold.
         
         """
-        if len(inputs) != len(target_outputs):
+        num_inputs = len(inputs)
+        num_outputs = len(target_outputs)
+        if num_inputs != num_outputs:
             print("Error: Number of input sets(%d) and target output " \
-                  "sets(%d) do not match" % (len(inputs),len(target_outputs)))
+                  "sets(%d) do not match" % (num_inputs,num_outputs))
             exit(1)
         
         # initialize variables for the following loops
-        error = network.calculate_error(inputs, target_outputs)
+        compute_network_output = network.compute_network_output # for performance
+        calculate_error = network.calculate_error # for performance
+        derivative = activation_function.derivative # for performance
+        hidden_neurons = network.hidden_layer.neurons
+        output_neurons = network.output_layer.neurons
         neuron = None
-        gradients = []
-        sum_value = 0.0
         iteration_counter = 0
+        error = calculate_error(inputs, target_outputs)
+        gradients = []
+        error_gradient = 0.0
+        out = 0
+        i = 0
+        sum_value = 0.0
+        delta = 0.0
+        momentum = 0.0
+        learning_rate = self.learning_rate
+        momentum_coef = self.momentum_coef
         
+
         while (iteration_counter < iterations) & (error > min_error):
             iteration_counter += 1
             # for each data entry
-            for i in range(len(inputs)):
+            for input_set, target_output_set in zip(inputs, target_outputs):
                 # prime the network on this row of input data
                 #    -this will cause local_output values to be
                 #     set for each neuron
-                network.compute_network_output(inputs[i])
+                compute_network_output(input_set) # see above
                 
-                # compute error gradients for output neurons
+                # compute error gradients for output neuron(s)
                 gradients = []
-                for j in range(len(network.output_layer.neurons)):
-                    # may have multiple output neurons
-                    neuron = network.output_layer.neurons[j]
+                for neuron, target_output_value in \
+                    zip(output_neurons, target_output_set):
                     out = neuron.local_output
                     # the error_gradient defines the magnitude and direction 
                     #    of the error
-                    neuron.error_gradient = ((target_outputs[i][j] - out) *
-                                             activation_function.derivative(out))
-                    gradients.append(neuron.error_gradient)
+                    error_gradient = ((target_output_value - out) *
+                                             derivative(out))
+                    neuron.error_gradient = error_gradient
+                    gradients.append(error_gradient)
+                
                 # compute error gradients for hidden neurons
-                for j in range(len(network.hidden_layer.neurons)):
-                    neuron = network.hidden_layer.neurons[j]
+                i = 0 # counter for this hidden neuron
+                for neuron in hidden_neurons:
                     out = neuron.local_output
                     # Need to sum the product of each output neuron's gradient
                     #    and the weight associated with the connection between
                     #    this hidden layer neuron and the output neuron
                     sum_value = 0.0
-                    for output_neuron in network.output_layer.neurons:
+                    for output_neuron in output_neurons:
                         sum_value += (output_neuron.error_gradient * 
-                                output_neuron.weights[j])
-                    neuron.error_gradient = (activation_function.derivative(out) * 
-                                             sum_value)
+                                output_neuron.weights[i])
+                    neuron.error_gradient = (derivative(out) * sum_value)
+                    i += 1
                 
                 # compute deltas and momentum values for each weight and 
                 #    threshold, and then add them to each weight and
@@ -77,40 +93,46 @@ class Backpropagation():
                 momentum = 0.0
                 for layer in network.layers:
                     for neuron in layer.neurons:
-                        # deltas and momentum values for weights
-                        for i in range(len(neuron.weights)):
+                        # compute the deltas and momentum values for weights
+                        i = 0
+                        input_set = neuron.inputs
+                        prev_weight_deltas = neuron.prev_weight_deltas
+                        for input_value, prev_weight_delta in \
+                            zip(input_set, prev_weight_deltas):
                             # delta value for this weight is equal to the
                             #    product of the learning rate, the error
                             #    gradient, and the input to this neuron
                             #    on the connection associated with this weight
-                            delta = (self.learning_rate * 
-                                     neuron.error_gradient * neuron.inputs[i])
+                            delta = (learning_rate * 
+                                     neuron.error_gradient * input_value)
                             # momentum value for this weight is equal to the
                             #    product of the momentum coefficient and the
                             #    previous delta for this weight
                             # the momentum keeps the weight values from 
                             #    oscillating during training
-                            momentum = (self.momentum_coef * 
-                                        neuron.prev_weight_deltas[i])
+                            momentum = momentum_coef * prev_weight_delta
                             
                             # now add these two values to the current weight
                             neuron.weights[i] += delta + momentum
                             # and update the previous delta value
                             neuron.prev_weight_deltas[i] = delta
+                            i += 1
                         # now compute the delta and momentum for the threshold 
                         #    value
-                        delta = (self.learning_rate * 
+                        delta = (learning_rate * 
                                  neuron.error_gradient * (-1))
-                        momentum = (self.momentum_coef * 
+                        momentum = (momentum_coef * 
                                     neuron.prev_threshold_delta)
                         # now add these two values to the current weight
                         neuron.threshold += delta + momentum
                         # and update the previous delta value
                         neuron.prev_threshold_delta = delta
                 
-                # now compute the new error
-                error = network.calculate_error(inputs, target_outputs)
-                #print("Iteration: %d, Error: %f" % (iteration_counter, error))                
+            # now compute the new error before the next iteration of the
+            #    while loop
+            error = calculate_error(inputs, target_outputs)
+                
+        self.iterations = iteration_counter # this is after the while loop
         
         
 
@@ -125,3 +147,4 @@ class SigmoidActivationFunction():
     def derivative(self, input_value):
         """Some training will require the derivative of the Sigmoid function"""
         return input_value * (1.0-input_value)
+    

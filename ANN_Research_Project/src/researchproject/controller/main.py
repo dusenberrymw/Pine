@@ -4,34 +4,86 @@ Created on Jun 6, 2013
 @author: dusenberrymw
 '''
 
-from researchproject.model import * 
+from researchproject.model.network import Network
+from researchproject.model import training
+from researchproject.model import data
+import time
+import cProfile
+import csv
 
-
-if __name__ == '__main__':
-    #inputs = [[1,2,3]]
-    #target_outputs = [[1]]
-    inputs = [[0,0],[1,0],[0,1],[1,1]]
-    target_outputs = [[0],[1],[1],[0]]
     
+def main():
+    # this will be used for timing the code
+    start_time = time.clock()
+    
+    # Set up the inputs and target outputs
+    inputs = []
+    target_outputs = []
+    temp_list = []
+    row_length = 0
+    with open('../model/data/CT_Data_Edited.csv', newline='') as data_file:
+            data_reader = csv.reader(data_file, delimiter=',', quotechar='|')
+            i = 0
+            for row in data_reader:
+                row_length = len(row)
+                temp_list = [int(x) for x in row]
+                inputs.append(temp_list[:row_length-1])
+                target_outputs.append(temp_list[row_length-1:row_length])
+    
+            data_file.close()
+    halfway_point = len(inputs)//2 # the // operator returns an integer
+    training_inputs = inputs[:halfway_point]
+#     testing_inputs = inputs[halfway_point:]
+    testing_inputs = training_inputs
+    training_target_outputs = target_outputs[:halfway_point]
+#     testing_target_outputs = target_outputs[halfway_point:]
+    testing_target_outputs = training_target_outputs
+    
+    training_inputs = [[0,0],[1,0],[0,1],[1,1]]
+    training_target_outputs = [[0],[1],[1],[0]]
+    testing_inputs = training_inputs
+    testing_target_outputs = training_target_outputs
+            
+    
+    # Create the network
     act_func = training.SigmoidActivationFunction()
-    network = network.Network(len(inputs[0]), act_func, 3)
+    num_hidden_layers = 2
+    network = Network(len(training_inputs[0]), act_func, num_hidden_layers)
     
+    # Test network prior to training
     print("Before training")
-    for i in range(len(inputs)):
-        outputs = network.compute_network_output(inputs[i])
+    for i in range(len(testing_inputs)):
+        outputs = network.compute_network_output(testing_inputs[i])
         for output in outputs:
-            print("Input: %s, Target Output: %s, Actual Output: %s" %(str(inputs[i]), str(target_outputs[i]), str(output)))
-    error = network.calculate_error(inputs, target_outputs)   
-    print("Error: %s" %(str(error)))
+            print("Input: %s, Target Output: %s, Actual Output: %s" 
+                  %(str(testing_inputs[i]), str(testing_target_outputs[i]), str(output)))
+    error = network.calculate_error(testing_inputs, testing_target_outputs)   
+    print("Error: %s \n" %(str(error)))
     
-    # now train
+    # Train the network
+    min_error = 0.001
+    iterations = 1
+    print("Will train for %s iterations \n" % str(iterations))
     trainer = training.Backpropagation()
-    trainer.train(inputs, target_outputs, network, act_func, 100000)
+    trainer.train(training_inputs, training_target_outputs, network, act_func, iterations, min_error)
     
-    print("\nAfter training")
-    for i in range(len(inputs)):
-        outputs = network.compute_network_output(inputs[i])
+    # Test the network after training
+    print("After training")
+    for i in range(len(testing_inputs)):
+        outputs = network.compute_network_output(testing_inputs[i])
         for output in outputs:
-            print("Input: %s, Target Output: %s, Actual Output: %s" %(str(inputs[i]), str(target_outputs[i]), str(output)))
-    error = network.calculate_error(inputs, target_outputs)   
+            print("Input: %s, Target Output: %s, Actual Output: %s" 
+                  %(str(testing_inputs[i]), str(testing_target_outputs[i]), str(output)))
+    error = network.calculate_error(testing_inputs, testing_target_outputs)   
     print("Error: %s" %(str(error)))
+    print("Trained for %s iterations" % (str(trainer.iterations)))
+    
+    print("Code took %s seconds to run\n" % (str(time.clock() - start_time)))
+    
+    
+if __name__ == '__main__':
+    cProfile.run('main()')
+#     main()
+
+    
+    
