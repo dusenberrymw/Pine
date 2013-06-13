@@ -31,13 +31,16 @@ def main():
                 target_outputs.append(temp_list[row_length-1:row_length])
     
             data_file.close()
-    halfway_point = len(inputs)//2 # the // operator returns an integer
-    training_inputs = inputs[:halfway_point]
+#     halfway_point = len(inputs)//2 # the // operator returns an integer
+#     training_inputs = inputs[:halfway_point]
+#     training_target_outputs = target_outputs[:halfway_point]
 #     testing_inputs = inputs[halfway_point:]
-    testing_inputs = training_inputs
-    training_target_outputs = target_outputs[:halfway_point]
 #     testing_target_outputs = target_outputs[halfway_point:]
-    testing_target_outputs = training_target_outputs
+
+#     training_inputs = inputs
+#     training_target_outputs = target_outputs
+#     testing_inputs = training_inputs
+#     testing_target_outputs = training_target_outputs
     
     training_inputs = [[0,0],[1,0],[0,1],[1,1]]
     training_target_outputs = [[0],[1],[1],[0]]
@@ -47,8 +50,10 @@ def main():
     
     # Create the network
     act_func = training.SigmoidActivationFunction()
-    num_hidden_layers = 2
-    network = Network(len(training_inputs[0]), act_func, num_hidden_layers)
+#     num_hidden_layers = 6
+#     network = Network(len(training_inputs[0]), act_func, num_hidden_layers)
+    network = Network(len(training_inputs[0]), act_func)
+    print(len(network.hidden_layer.neurons))
     
     # Test network prior to training
     print("Before training")
@@ -61,8 +66,8 @@ def main():
     print("Error: %s \n" %(str(error)))
     
     # Train the network
-    min_error = 0.001
-    iterations = 1
+    min_error = 0.00001
+    iterations = 100000
     print("Will train for %s iterations \n" % str(iterations))
     trainer = training.Backpropagation()
     trainer.train(training_inputs, training_target_outputs, network, act_func, iterations, min_error)
