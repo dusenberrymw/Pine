@@ -12,11 +12,14 @@ class Network():
     """A class for the overall network"""
     
     def __init__(self, num_inputs, activation_function,
-                 num_hidden_neurons=None, num_output_neurons=1):
+                 num_hidden_layer1_neurons=None, two_hidden_layers=False,
+                 num_hidden_layer2_neurons=None, num_output_neurons=1):
         """Constructor"""
         self.num_inputs = num_inputs
         self.activation_function = activation_function
-        if num_hidden_neurons is None:
+        self.layers = []
+        
+        if num_hidden_layer1_neurons is None:
             # General rules of thumb:
             #     -The number of hidden neurons should be between the size of
             #        the input layer and the size of the output layer.
@@ -24,28 +27,33 @@ class Network():
             #        input layer, plus the size of the output layer.
             #     -The number of hidden neurons should be less than twice the 
             #        -size of the input layer.
-            num_hidden_neurons = round((2/3) * num_inputs) + num_output_neurons
-        self.hidden_layer = Layer(num_hidden_neurons, num_inputs)
-        self.output_layer = Layer(num_output_neurons, num_hidden_neurons)
-        self.layers = [self.hidden_layer, self.output_layer]
+            num_hidden_layer1_neurons = (round((2/3) * num_inputs) + 
+                                         num_output_neurons)
+            self.layers.append(Layer(num_hidden_layer1_neurons, num_inputs))
+            num_inputs_to_output_neurons = num_hidden_layer1_neurons
+
+        if two_hidden_layers:
+            # NOTE: there is no theoretical reason to have more than 2 hidden
+            #    layers
+            if num_hidden_layer2_neurons is None:
+                num_hidden_layer2_neurons = num_hidden_layer1_neurons
+            self.layers.append(Layer(num_hidden_layer2_neurons, 
+                                     num_hidden_layer1_neurons))
+            num_inputs_to_output_neurons = num_hidden_layer2_neurons
+
+        self.output_layer = Layer(num_output_neurons, 
+                                  num_inputs_to_output_neurons)
+        self.layers.append(self.output_layer)
+        self.hidden_layers = self.layers[:-1] # everything but the output layer
+
     
     def compute_network_output(self, inputs):
         """Compute output(s) of network given one entry (row) of data"""
-#         if len(inputs) != self.num_inputs:
-#             print("Error: Number of inputs(%d) previously defined(%d) and "
-#                     "those given do not match" %(len(inputs), self.num_inputs))
-#             traceback.print_stack()
-#             exit(1)  
-        outputs = []
-        local_output = 0.0
-        layers = self.layers
-        neurons = []
         activate = self.activation_function.activate
         
-        for layer in layers:
+        for layer in self.layers:
             outputs = []
-            neurons = layer.neurons
-            for neuron in neurons:
+            for neuron in layer.neurons:
                 # the first layer is the hidden neurons,
                 #    so the inputs are those supplied to the
                 #    network
@@ -61,9 +69,8 @@ class Network():
                 neuron.inputs = inputs
                 
                 # multiply each input with the associated weight for that connection
-                local_output = 0.0
-                weights = neuron.weights  
-                for input_value, weight_value in zip(inputs, weights):
+                local_output = 0.0  
+                for input_value, weight_value in zip(inputs, neuron.weights):
                     local_output += input_value * weight_value
                 
                 # then subtract the threshold value
@@ -78,7 +85,8 @@ class Network():
                 
             # the inputs to the next layer will be the outputs
             #    of the previous layer
-            inputs = outputs[:]
+            inputs = outputs
+            
         return outputs
     
     def calculate_error(self, inputs, target_outputs):
@@ -101,9 +109,9 @@ class Network():
         for input_set, target_output_set in zip(inputs, target_outputs):
             computed_output_set = compute_network_output(input_set)
             
-            for target_output_value, computed_output_value in \
+            for target_output, computed_output in \
                     zip(target_output_set, computed_output_set):
-                residual = target_output_value - computed_output_value
+                residual = target_output - computed_output
                 error += residual*residual  # square the residual value
         
         # average the error and take the square root

@@ -55,10 +55,11 @@ def main():
     
     # Create the network
     act_func = training.SigmoidActivationFunction()
-#     num_hidden_layers = 6
-#     network = Network(len(training_inputs[0]), act_func, num_hidden_layers)
-    network = Network(len(training_inputs[0]), act_func)
-    print(len(network.hidden_layer.neurons))
+#     network = Network(len(training_inputs[0]), act_func)
+    network = Network(len(training_inputs[0]), act_func, two_hidden_layers=True)
+    print(len(network.layers[0].neurons))
+    print(len(network.layers))
+    print(len(network.hidden_layers))
     
     # Test network prior to training
     print("Before training")
@@ -72,7 +73,7 @@ def main():
     
     # Train the network
     min_error = 0.00001
-    iterations = 1000
+    iterations = 10000
     print("Will train for %s iterations \n" % str(iterations))
     trainer = training.Backpropagation()
     trainer.train(training_inputs, training_target_outputs, network, act_func, iterations, min_error)
@@ -95,16 +96,10 @@ if __name__ == '__main__':
     cProfile.run('main()')
 #     main()
 
-#      neuron_weights = [1,1,1]
-#     deltas = [2,2,2]
-#     momentums = [3,3,3]
-# 
-#     new_weights  = [sum(i) for i in zip(neuron_weights, deltas, momentums)]
-#      
-#      new_weights = neuron_weights
-#      new_weights[0] = 9
-#      print(neuron_weights)
-#      print(new_weights)
-
+#     i = [1,2,3]
+#     j = reversed(i[:-1])
+#     print(j)
+#     for m in j:
+#         print(m)
     
     
