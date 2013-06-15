@@ -17,7 +17,6 @@ class Network():
         self.num_inputs = num_inputs
         self.activation_function = activation_function
         if num_hidden_neurons is None:
-            # ***THIS NEEDS TO BE CHANGED***
             # General rules of thumb:
             #     -The number of hidden neurons should be between the size of
             #        the input layer and the size of the output layer.
@@ -26,8 +25,8 @@ class Network():
             #     -The number of hidden neurons should be less than twice the 
             #        -size of the input layer.
             num_hidden_neurons = round((2/3) * num_inputs) + num_output_neurons
-        self.hidden_layer = Layer(num_hidden_neurons, num_inputs, activation_function)
-        self.output_layer = Layer(num_output_neurons, num_hidden_neurons, activation_function)
+        self.hidden_layer = Layer(num_hidden_neurons, num_inputs)
+        self.output_layer = Layer(num_output_neurons, num_hidden_neurons)
         self.layers = [self.hidden_layer, self.output_layer]
     
     def compute_network_output(self, inputs):
@@ -55,7 +54,7 @@ class Network():
                 
                 # NOTE: for performance reasons, this method call
                 #    is being eliminated, and is being inlined below
-#                 local_output = neuron.compute_output(inputs)
+#                 local_output = neuron.compute_output(inputs, self.activation_function)
 #                 outputs.append(local_output)
 
                 # keep track of what inputs were sent to this neuron
@@ -71,8 +70,6 @@ class Network():
                 local_output += neuron.threshold * -1
                 
                 # finally, use the activation function to determine the output
-#                 local_output = (neuron.activation_function.
-#                     activate(local_output))
                 local_output = activate(local_output)
                 
                 # store outputs
@@ -117,19 +114,18 @@ class Network():
 class Layer():
     """A class for layers in the network"""
     
-    def __init__(self, num_neurons, num_inputs, activation_function):
+    def __init__(self, num_neurons, num_inputs):
         """Constructor"""
         self.neurons = []
         for _ in range(num_neurons):
-            self.neurons.append(Neuron(num_inputs, activation_function))
+            self.neurons.append(Neuron(num_inputs))
 
 
 class Neuron:
     """A class for neurons in the network"""
     
-    def __init__(self, num_inputs, activation_function):
+    def __init__(self, num_inputs):
         """Constructor"""
-        self.activation_function = activation_function
         self.inputs = [] # the inputs coming from previous neurons
         self.local_output = 0.0 # the output leaving this neuron
         self.error_gradient = 0.0
@@ -141,7 +137,7 @@ class Neuron:
         self.threshold = random.random()
         self.prev_threshold_delta = random.random()
     
-    def compute_output(self, inputs):
+    def compute_output(self, inputs, activation_function):
         """Given a set of inputs from previous layer neuron,
         will compute the local output of the neuron
         """
@@ -158,7 +154,7 @@ class Neuron:
         local_output += self.threshold * -1
         
         # finally, use the activation function to determine the output
-        local_output = (self.activation_function.
+        local_output = (activation_function.
             activate(local_output))
         
         # store outputs

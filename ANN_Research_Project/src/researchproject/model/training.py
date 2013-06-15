@@ -55,17 +55,20 @@ class Backpropagation():
         error_gradient = 0.0
         gradients_and_weights = []
         sum_value = 0.0
+        local_input_set = []
         delta = 0.0
         momentum = 0.0
         learning_rate = self.learning_rate
         momentum_coef = self.momentum_coef
+        loop_values = None
         
-
+        # start learning
         while (iteration_counter < iterations) & (error > min_error):
             iteration_counter += 1
             error = 0.0 # clear out the error
             # for each row of data
-            for input_set, target_output_set in zip(inputs, target_outputs):
+            loop_values = zip(inputs, target_outputs)
+            for input_set, target_output_set in loop_values:
                 # prime the network on this row of input data
                 #    -this will cause local_output values to be
                 #     set for each neuron
@@ -75,29 +78,30 @@ class Backpropagation():
                 # also keep track of total network error
                 #     Note: only need to do this for output neurons
                 gradients_and_weights = []
-                for neuron, target_output_value in \
-                        zip(output_neurons, target_output_set):
+                loop_values = zip(output_neurons, target_output_set)
+                for neuron, target_output_value in loop_values:
                     computed_output_value = neuron.local_output
-                    
+                     
                     # keep track of the error from this output neuron for use
                     #    in determining how well the network is performing
                     # note: only need to do this for output neurons
                     residual = target_output_value - computed_output_value
                     error += residual*residual  # square the residual value
-                    
+                     
                     # the error_gradient defines the magnitude and direction 
                     #    of the error for use in learning
                     error_gradient = residual * derivative(computed_output_value)
                     neuron.error_gradient = error_gradient
-                    
+                     
                     # now store the error gradient and the list of weights for
                     #    this output neuron as a tuple
                     gradients_and_weights.append((error_gradient, neuron.weights))
-                
+                 
                 # compute error gradients for hidden neurons
-                for i, neuron in enumerate(hidden_neurons):
+                loop_values = enumerate(hidden_neurons)
+                for i, neuron in loop_values:
                     computed_output_value = neuron.local_output
-                    
+                     
                     # Need to sum the product of each output neuron's gradient
                     #    and the weight associated with the connection between
                     #    this hidden layer neuron and the output neuron
@@ -110,6 +114,7 @@ class Backpropagation():
                             gradient_and_weights[1][i])
                     neuron.error_gradient = (derivative(computed_output_value) * sum_value)
                 
+                # NOTE: THIS SECTION NEEDS TO BE IMPROVED FOR PERFORMANCE REASONS
                 # compute deltas and momentum values for each weight and 
                 #    threshold, and then add them to each weight and
                 #    threshold value
@@ -118,14 +123,15 @@ class Backpropagation():
                 for layer in network.layers:
                     neurons = layer.neurons
                     for neuron in neurons:
-                        input_set = neuron.inputs
+                        local_input_set = neuron.inputs
                         error_gradient = neuron.error_gradient
                         prev_weight_deltas = neuron.prev_weight_deltas
-                        
+                        neuron_weights = neuron.weights
+                          
                         # compute the deltas and momentum values for each 
                         #    weight
-                        for i, (input_value, prev_weight_delta) in \
-                                enumerate(zip(input_set, prev_weight_deltas)):
+                        loop_values = enumerate(zip(local_input_set, prev_weight_deltas))
+                        for i, (input_value, prev_weight_delta) in loop_values:
                             # delta value for this weight is equal to the
                             #    product of the learning rate, the error
                             #    gradient, and the input to this neuron
@@ -138,18 +144,19 @@ class Backpropagation():
                             # the momentum keeps the weight values from 
                             #    oscillating during training
                             momentum = momentum_coef * prev_weight_delta
-                            
+   
                             # now add these two values to the current weight
-                            neuron.weights[i] += delta + momentum
+                            neuron_weights[i] += delta + momentum
                             # and update the previous weight delta value
-                            neuron.prev_weight_deltas[i] = delta
-
+                            prev_weight_deltas[i] = delta
+                         
+                         
                         # now compute the delta and momentum for the threshold 
-                        #    value
+                        #   value, by using a -1 as the threshold "input value"
                         delta = (learning_rate * error_gradient * (-1))
                         momentum = (momentum_coef * 
                                     neuron.prev_threshold_delta)
-                        
+                           
                         # now add these two values to the current threshold
                         neuron.threshold += delta + momentum
                         # and update the previous threshold delta value
