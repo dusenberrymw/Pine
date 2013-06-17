@@ -55,8 +55,8 @@ def main():
     
     # Create the network
     act_func = training.SigmoidActivationFunction()
-#     network = Network(len(training_inputs[0]), act_func)
-    network = Network(len(training_inputs[0]), act_func, two_hidden_layers=True)
+    network = Network(len(training_inputs[0]), act_func)
+#     network = Network(len(training_inputs[0]), act_func, two_hidden_layers=True)
     print(len(network.layers[0].neurons))
     print(len(network.layers))
     print(len(network.hidden_layers))

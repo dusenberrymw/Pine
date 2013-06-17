@@ -74,7 +74,7 @@ class Network():
                     local_output += input_value * weight_value
                 
                 # then subtract the threshold value
-                local_output += neuron.threshold * -1
+                local_output -= neuron.threshold
                 
                 # finally, use the activation function to determine the output
                 local_output = activate(local_output)
@@ -136,7 +136,6 @@ class Neuron:
         """Constructor"""
         self.inputs = [] # the inputs coming from previous neurons
         self.local_output = 0.0 # the output leaving this neuron
-        self.error_gradient = 0.0
         self.weights = [] # need a weight for each input to the neuron
         self.prev_weight_deltas = []
         for _ in range(num_inputs):
