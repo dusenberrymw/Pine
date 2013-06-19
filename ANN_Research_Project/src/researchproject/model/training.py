@@ -6,25 +6,31 @@ Created on Jun 6, 2013
 import math
 
 
-class Backpropagation():
+class Backpropagation(object):
     """Class for the Backpropagation type of training"""
     
-    def __init__(self, learning_rate=0.7, momentum_coef=0.9):
-        """ Constructor
-        
-        Learning rate = degree to which the weight and threshold values will
-            be changed during each iteration of training
-        Momentum = degree to which the previous learning will affect this 
-            iteration's weight and threshold values. Effectively, it keeps 
-            the weight values from oscillating during training
-        
-        """
-        # Note: these values will need to be adjusted by trial and error
-        self.learning_rate = learning_rate
-        self.momentum_coef = momentum_coef
+    def __init__(self):
+        """ Constructor"""
 
-    def train(self, inputs, target_outputs, network, activation_function,
-              iterations=1000, min_error=0.01):
+    def parallel_train(self, network, network_num, params, num_processes, results_queue):
+        """This function is run by the parallel processes to each train their
+        network on a subset of the training data"""
+        # get the training data
+        training_inputs_subset = \
+                params['data'].training_inputs[network_num::num_processes]
+        training_target_outputs_subset = \
+                params['data'].training_target_outputs[network_num::num_processes]
+        # now train
+        self.train(network, training_inputs_subset, 
+                      training_target_outputs_subset, 
+                      params['learning_rate'], params['momentum_coef'],
+                      params['iterations'], params['min_error'])
+        # return this trained network back to the main process by placing it on
+        #    the queue
+        results_queue.put(network)
+
+    def train(self, network, inputs, target_outputs, learning_rate=0.7, momentum_coef=0.9,
+              iterations=1000, min_error=0.001):
         """This trains the given network using the given multiple
         sets of data (multiple rows) against the associated target outputs
         
@@ -32,6 +38,12 @@ class Backpropagation():
         Then, for each neuron in the hidden layer(s), find the error gradient.
         Then, find the deltas and momentum of each neuron's weights and threshold 
             values and add both to each weight and threshold.
+        
+        Learning rate = degree to which the weight and threshold values will
+            be changed during each iteration of training
+        Momentum = degree to which the previous learning will affect this 
+            iteration's weight and threshold values. Effectively, it keeps 
+            the weight values from oscillating during training
         
         """
         num_input_sets = len(inputs)
@@ -42,13 +54,11 @@ class Backpropagation():
             exit(1)
         
         # initialize variables for the following loops for performance
-        compute_network_output = network.compute_network_output # for performance
-        activate = activation_function.activate
-        derivative = activation_function.derivative # for performance  
+#         compute_network_output = network.compute_network_output # for performance
+        activate = network.activation_function.activate
+        derivative = network.activation_function.derivative # for performance  
         num_values = num_output_sets * len(target_outputs[0])
         layers = network.layers
-        learning_rate = self.learning_rate
-        momentum_coef = self.momentum_coef
         
         # start learning
         iteration_counter = 0
@@ -189,11 +199,10 @@ class Backpropagation():
             error = math.sqrt(error/num_values)
         
         # this is after the while loop
-        self.iterations = iteration_counter
-        
+        self.iterations = iteration_counter        
         
 
-class SigmoidActivationFunction():
+class SigmoidActivationFunction(object):
     """Class for one of the possible activation functions used by the network"""
     
     def activate(self, input_value):

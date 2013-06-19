@@ -8,7 +8,7 @@ import math
 from researchproject.model.training import SigmoidActivationFunction
 
 
-class Network():
+class Network(object):
     """A class for the overall network"""
     
     def __init__(self, num_inputs, activation_function,
@@ -85,8 +85,7 @@ class Network():
                 
             # the inputs to the next layer will be the outputs
             #    of the previous layer
-            inputs = outputs
-            
+            inputs = outputs   
         return outputs
     
     def calculate_error(self, inputs, target_outputs):
@@ -119,7 +118,7 @@ class Network():
         return math.sqrt(error/num_values)
 
 
-class Layer():
+class Layer(object):
     """A class for layers in the network"""
     
     def __init__(self, num_neurons, num_inputs):
@@ -129,7 +128,7 @@ class Layer():
             self.neurons.append(Neuron(num_inputs))
 
 
-class Neuron:
+class Neuron(object):
     """A class for neurons in the network"""
     
     def __init__(self, num_inputs):
@@ -169,4 +168,22 @@ class Neuron:
         
         return local_output
 
+
+def print_network_error(network, data):
+    """Print the current error for the given network"""
+    error = network.calculate_error(data.training_inputs, 
+                                    data.training_target_outputs)   
+    print('Error w/ Training Data: {0}'.format(error))
+    error = network.calculate_error(data.testing_inputs, 
+                                    data.testing_target_outputs)   
+    print('Error w/ Test Data: {0}'.format(error))
+
+    
+def print_network_outputs(network, data):
+    """Print the given network's outputs on the test data"""
+    for i in range(len(data.testing_inputs)):
+        outputs = network.compute_network_output(data.testing_inputs[i])
+        print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
+              format(data.testing_inputs[i], data.testing_target_outputs[i], 
+                     outputs))
 
