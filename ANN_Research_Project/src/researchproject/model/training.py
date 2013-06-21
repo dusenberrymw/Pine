@@ -3,7 +3,9 @@ Created on Jun 6, 2013
 
 @author: dusenberrymw
 '''
-import math
+from math import exp, log, tanh, atanh, sqrt
+from multiprocessing import Process, Queue
+import copy
 
 
 class Backpropagation(object):
@@ -12,14 +14,17 @@ class Backpropagation(object):
     def __init__(self):
         """ Constructor"""
 
-    def parallel_train(self, network, network_num, params, num_processes, results_queue):
-        """This function is run by the parallel processes to each train their
+
+    def parallel_train(self, network, params, process_num, num_processes, results_queue):
+        """This function is run by parallel processes to each train their
         network on a subset of the training data"""
         # get the training data
+        #    -start with the nth element, where n is this processes number, and
+        #        skip by x elements, where x is the total number of processes
         training_inputs_subset = \
-                params['data'].training_inputs[network_num::num_processes]
+                params['data'].training_inputs[process_num::num_processes]
         training_target_outputs_subset = \
-                params['data'].training_target_outputs[network_num::num_processes]
+                params['data'].training_target_outputs[process_num::num_processes]
         # now train
         self.train(network, training_inputs_subset, 
                       training_target_outputs_subset, 
@@ -28,6 +33,7 @@ class Backpropagation(object):
         # return this trained network back to the main process by placing it on
         #    the queue
         results_queue.put(network)
+
 
     def train(self, network, inputs, target_outputs, learning_rate=0.7, momentum_coef=0.9,
               iterations=1000, min_error=0.001):
@@ -54,7 +60,7 @@ class Backpropagation(object):
             exit(1)
         
         # initialize variables for the following loops for performance
-#         compute_network_output = network.compute_network_output # for performance
+        compute_network_output = network.compute_network_output # for performance
         activate = network.activation_function.activate
         derivative = network.activation_function.derivative # for performance  
         num_values = num_output_sets * len(target_outputs[0])
@@ -71,40 +77,39 @@ class Backpropagation(object):
                 # prime the network on this row of input data
                 #    -this will cause local_output values to be
                 #     set for each neuron
-#                 compute_network_output(input_set) # see above
-                these_inputs = input_set
-                for layer in network.layers:
-                    outputs = []
-                    for neuron in layer.neurons:
-                        # the first layer is the hidden neurons,
-                        #    so the inputs are those supplied to the
-                        #    network
-                        # then, for the next layers, the inputs will
-                        #    be the outputs of the previous layer
-                        
-                        # keep track of what inputs were sent to this neuron
-                        neuron.inputs = these_inputs
-                        
-                        # multiply each input with the associated weight for that connection
-                        local_output = 0.0  
-                        for input_value, weight_value in zip(these_inputs, neuron.weights):
-                            local_output += input_value * weight_value
-                        
-                        # then subtract the threshold value
-                        local_output -= neuron.threshold
-                        
-                        # finally, use the activation function to determine the output
-                        local_output = activate(local_output)
-                        
-                        # store outputs
-                        neuron.local_output = local_output
-                        outputs.append(local_output)
-                        
-                    # the inputs to the next layer will be the outputs
-                    #    of the previous layer
-                    these_inputs = outputs
-                
-                                        
+                compute_network_output(input_set) # see above
+#                 these_inputs = input_set
+#                 for layer in network.layers:
+#                     outputs = []
+#                     for neuron in layer.neurons:
+#                         # the first layer is the hidden neurons,
+#                         #    so the inputs are those supplied to the
+#                         #    network
+#                         # then, for the next layers, the inputs will
+#                         #    be the outputs of the previous layer
+#                         
+#                         # keep track of what inputs were sent to this neuron
+#                         neuron.inputs = these_inputs
+#                         
+#                         # multiply each input with the associated weight for that connection
+#                         local_output = 0.0  
+#                         for input_value, weight_value in zip(these_inputs, neuron.weights):
+#                             local_output += input_value * weight_value
+#                         
+#                         # then subtract the threshold value
+#                         local_output -= neuron.threshold
+#                         
+#                         # finally, use the activation function to determine the output
+#                         local_output = activate(local_output)
+#                         
+#                         # store outputs
+#                         neuron.local_output = local_output
+#                         outputs.append(local_output)
+#                         
+#                     # the inputs to the next layer will be the outputs
+#                     #    of the previous layer
+#                     these_inputs = outputs
+                           
                 # For each neuron, starting with the output layer and moving
                 #     backwards through the layers:
                 #        -find and store the error gradient
@@ -151,7 +156,7 @@ class Backpropagation(object):
                         #    for this neuron as a tuple
                         new_gradients_and_weights.append((error_gradient,
                                                       neuron_weights))
-                        
+                         
                         # Now, compute and add delta and momentum values
                         #     for each weight associated with this neuron
                         for i, (input_value, prev_weight_delta) in \
@@ -174,8 +179,7 @@ class Backpropagation(object):
                             neuron_weights[i] += delta + momentum
                             # and update the previous weight delta value
                             prev_weight_deltas[i] = delta
-                         
-                         
+                             
                         # now compute the delta and momentum for the threshold 
                         #   value, by using a -1 as the threshold "input value"
                         delta = (learning_rate * error_gradient * (-1))
@@ -187,29 +191,116 @@ class Backpropagation(object):
                         # and update the previous threshold delta value
                         neuron.prev_threshold_delta = delta
                         
-                    
                     # store the gradients and weights from the current layer
                     #    for the next layer (moving backwards)
                     gradients_and_weights = new_gradients_and_weights
                     isOutputLayer = False
                 
-                
             # now compute the new error before the next iteration of the
             #    while loop by averaging the error and take the square root
-            error = math.sqrt(error/num_values)
+            error = sqrt(error/num_values) # using math.sqrt
         
-        # this is after the while loop
+        # Note: this is after the while loop
         self.iterations = iteration_counter        
         
 
 class SigmoidActivationFunction(object):
     """Class for one of the possible activation functions used by the network"""
-    
     def activate(self, input_value):
-        """Run the input value through the sigmoid function"""
-        return 1.0 / (1 + math.exp(-1.0*input_value))
+        """Run the input value through the sigmoid function
+        This will only return values between 0 and 1
+        """
+        return 1.0 / (1 + exp(-1.0*input_value)) # using math.exp
     
     def derivative(self, input_value):
         """Some training will require the derivative of the Sigmoid function"""
         return input_value * (1.0-input_value)
     
+    def inverse(self, input_value):
+        """This will produce the inverse of the sigmoid function, which is
+        useful in determining the original value before activation
+        """
+        return log(input_value/(1-input_value)) # using math.log
+    
+
+class TanhActivationFunction(object):
+    """Class for one of the possible activation functions used by the network"""
+    def activate(self, input_value):
+        """Run the input value through the tanh function"""
+        return tanh(input_value) #using math.tanh
+    
+    def derivative(self, input_value):
+        """Some training will require the derivative of the tanh function"""
+        return (1.0-input_value) * (1.0+input_value)
+    
+    def inverse(self, input_value):
+        """This will produce the inverse of the tahn function, which is
+        useful in determining the original value before activation
+        """
+        return atanh(input_value) # using math.atanh
+
+
+def parallel_training(master_network, trainer, params):
+    """Train the given network over multiple processes using the given trainer
+    
+    This will ultimately change the weights in the given master network
+    
+    """
+    # Determine the number of processes
+    num_processes = params['num_processes']
+    
+    # Create the return queue to store the training networks that are returned
+    #    from each process
+    results_queue = Queue() # this is the multiprocessing queue
+
+    # Train the training networks on a subset of the data
+    #    -this is where the parallelization will occur
+    #    -Note: when this process is created, a copy of all objects will be
+    #        made, so no need to make a copy of the master network first
+    #    -Note: this process counts as one of the processes, so be sure to
+    #        have this one do work as well, set as the last process number
+    jobs = [Process(target=trainer.parallel_train, 
+                    args=(master_network, params, process_num, num_processes, 
+                          results_queue))
+                    for process_num in range(num_processes-1)]
+    # start the other processes
+    for job in jobs: job.start()
+    
+    # while those processes are running, perform this process's work as well
+    #    -make a copy of the master network because this process is the one
+    #    initially created the network
+    trainer.parallel_train(copy.deepcopy(master_network), params, 
+                           num_processes-1, num_processes, results_queue)
+    
+    # retrieve the trained networks as they come in
+    #    Note: this is necessary because the multiprocess Queue is actually
+    #        a pipe, and has a maximum size limit.  Therefore, it not work 
+    #        unless these are pulled from the other end
+    #    Note: the get() will, by default, wait until there is an item ready
+    #        with no timeout
+    training_networks = [results_queue.get() for _ in range(num_processes)]
+    
+    # now wait for the other processes to finish
+    for job in jobs: job.join()
+    
+    # now average out the training networks into the master network
+    #    by averaging the weights and threshold values
+    for i, layer in enumerate(master_network.layers):
+        for j, neuron in enumerate(layer.neurons):
+            for k in range(len(neuron.weights)):
+                weight_sum = 0.0
+                prev_weight_delta_sum = 0.0
+                for network in training_networks:
+                    weight_sum += network.layers[i].neurons[j].weights[k]
+                    prev_weight_delta_sum += network.layers[i].neurons[j].prev_weight_deltas[k]
+                neuron.weights[k] = weight_sum/num_processes
+                neuron.prev_weight_deltas[k] = prev_weight_delta_sum/num_processes
+            threshold_sum = 0.0
+            prev_threshold_delta_sum = 0.0
+            for network in training_networks:
+                    threshold_sum += network.layers[i].neurons[j].threshold
+                    prev_threshold_delta_sum += network.layers[i].neurons[j].prev_threshold_delta
+            neuron.threshold = threshold_sum/num_processes
+            neuron.prev_threshold_delta = prev_threshold_delta_sum/num_processes
+            
+

@@ -29,8 +29,9 @@ class Network(object):
             #        -size of the input layer.
             num_hidden_layer1_neurons = (round((2/3) * num_inputs) + 
                                          num_output_neurons)
-            self.layers.append(Layer(num_hidden_layer1_neurons, num_inputs))
-            num_inputs_to_output_neurons = num_hidden_layer1_neurons
+        # add the first hidden layer
+        self.layers.append(Layer(num_hidden_layer1_neurons, num_inputs))
+        num_inputs_to_output_neurons = num_hidden_layer1_neurons
 
         if two_hidden_layers:
             # NOTE: there is no theoretical reason to have more than 2 hidden
@@ -62,26 +63,26 @@ class Network(object):
                 
                 # NOTE: for performance reasons, this method call
                 #    is being eliminated, and is being inlined below
-#                 local_output = neuron.compute_output(inputs, self.activation_function)
-#                 outputs.append(local_output)
-
-                # keep track of what inputs were sent to this neuron
-                neuron.inputs = inputs
-                
-                # multiply each input with the associated weight for that connection
-                local_output = 0.0  
-                for input_value, weight_value in zip(inputs, neuron.weights):
-                    local_output += input_value * weight_value
-                
-                # then subtract the threshold value
-                local_output -= neuron.threshold
-                
-                # finally, use the activation function to determine the output
-                local_output = activate(local_output)
-                
-                # store outputs
-                neuron.local_output = local_output
+                local_output = neuron.compute_output(inputs, self.activation_function)
                 outputs.append(local_output)
+# 
+#                 # keep track of what inputs were sent to this neuron
+#                 neuron.inputs = inputs
+#                 
+#                 # multiply each input with the associated weight for that connection
+#                 local_output = 0.0  
+#                 for input_value, weight_value in zip(inputs, neuron.weights):
+#                     local_output += input_value * weight_value
+#                 
+#                 # then subtract the threshold value
+#                 local_output -= neuron.threshold
+#                 
+#                 # finally, use the activation function to determine the output
+#                 local_output = activate(local_output)
+#                 
+#                 # store outputs
+#                 neuron.local_output = local_output
+#                 outputs.append(local_output)
                 
             # the inputs to the next layer will be the outputs
             #    of the previous layer
@@ -138,10 +139,10 @@ class Neuron(object):
         self.weights = [] # need a weight for each input to the neuron
         self.prev_weight_deltas = []
         for _ in range(num_inputs):
-            self.weights.append(random.random())
-            self.prev_weight_deltas.append(random.random())
-        self.threshold = random.random()
-        self.prev_threshold_delta = random.random()
+            self.weights.append(random.uniform(-1,1))
+            self.prev_weight_deltas.append(random.uniform(-1,1))
+        self.threshold = random.uniform(-1,1)
+        self.prev_threshold_delta = random.uniform(-1,1)
     
     def compute_output(self, inputs, activation_function):
         """Given a set of inputs from previous layer neuron,
@@ -157,7 +158,7 @@ class Neuron(object):
             local_output += input_value * weight_value
         
         # then subtract the threshold value
-        local_output += self.threshold * -1
+        local_output -= self.threshold
         
         # finally, use the activation function to determine the output
         local_output = (activation_function.
