@@ -54,7 +54,6 @@ def ct_data():
     return Data(inputs, target_outputs, training_inputs, 
                 training_target_outputs, testing_inputs, 
                 testing_target_outputs)
-    
 
 
 def iris_data():
@@ -104,7 +103,7 @@ def iris_data():
     return Data(inputs, target_outputs, training_inputs, 
                 training_target_outputs, testing_inputs, 
                 testing_target_outputs)
-    
+
 
 def letter_recognition_data():
     """Return a data object containing the training and testing data for the

@@ -5,85 +5,54 @@ Created on Jun 6, 2013
 '''
 import random
 import math
-from researchproject.model.training import SigmoidActivationFunction
 
 
 class Network(object):
     """A class for the overall network"""
     
-    def __init__(self, num_inputs, activation_function,
-                 num_hidden_layer1_neurons=None, two_hidden_layers=False,
-                 num_hidden_layer2_neurons=None, num_output_neurons=1):
+    def __init__(self, num_inputs, num_neurons_list, activation_functions):
         """Constructor"""
-        self.num_inputs = num_inputs
-        self.activation_function = activation_function
         self.layers = []
-        
-        if num_hidden_layer1_neurons is None:
-            # General rules of thumb:
-            #     -The number of hidden neurons should be between the size of
-            #        the input layer and the size of the output layer.
-            #     -The number of hidden neurons should be 2/3 the size of the 
-            #        input layer, plus the size of the output layer.
-            #     -The number of hidden neurons should be less than twice the 
-            #        -size of the input layer.
-            num_hidden_layer1_neurons = (round((2/3) * num_inputs) + 
-                                         num_output_neurons)
-        # add the first hidden layer
-        self.layers.append(Layer(num_hidden_layer1_neurons, num_inputs))
-        num_inputs_to_output_neurons = num_hidden_layer1_neurons
-
-        if two_hidden_layers:
-            # NOTE: there is no theoretical reason to have more than 2 hidden
-            #    layers
-            if num_hidden_layer2_neurons is None:
-                num_hidden_layer2_neurons = num_hidden_layer1_neurons
-            self.layers.append(Layer(num_hidden_layer2_neurons, 
-                                     num_hidden_layer1_neurons))
-            num_inputs_to_output_neurons = num_hidden_layer2_neurons
-
-        self.output_layer = Layer(num_output_neurons, 
-                                  num_inputs_to_output_neurons)
-        self.layers.append(self.output_layer)
-        self.hidden_layers = self.layers[:-1] # everything but the output layer
-
+        for num_neurons, activation_function in \
+                zip(num_neurons_list, activation_functions):
+            if num_neurons is None:
+                # General rules of thumb:
+                #     -The number of hidden neurons should be between the size of
+                #        the input layer and the size of the output layer.
+                #     -The number of hidden neurons should be 2/3 the size of the 
+                #        input layer, plus the size of the output layer.
+                #     -The number of hidden neurons should be less than twice the 
+                #        -size of the input layer.
+                num_neurons = (round((2/3) * num_inputs) + 
+                               num_neurons_list[-1])
+            self.layers.append(Layer(num_neurons, num_inputs, activation_function))
+            num_inputs = num_neurons # for the next layer
+    
     
     def compute_network_output(self, inputs):
         """Compute output(s) of network given one entry (row) of data"""
-        activate = self.activation_function.activate
-        
         for layer in self.layers:
+            activate = layer.activation_function.activate
             outputs = []
+            # the first layer is the hidden neurons,
+            #    so the inputs are those supplied to the
+            #    network
+            # then, for the next layers, the inputs will
+            #    be the outputs of the previous layer
             for neuron in layer.neurons:
-                # the first layer is the hidden neurons,
-                #    so the inputs are those supplied to the
-                #    network
-                # then, for the next layers, the inputs will
-                #    be the outputs of the previous layer
-                
-                # NOTE: for performance reasons, this method call
-                #    is being eliminated, and is being inlined below
-                local_output = neuron.compute_output(inputs, self.activation_function)
-                outputs.append(local_output)
-# 
-#                 # keep track of what inputs were sent to this neuron
-#                 neuron.inputs = inputs
-#                 
-#                 # multiply each input with the associated weight for that connection
-#                 local_output = 0.0  
-#                 for input_value, weight_value in zip(inputs, neuron.weights):
-#                     local_output += input_value * weight_value
-#                 
-#                 # then subtract the threshold value
-#                 local_output -= neuron.threshold
-#                 
-#                 # finally, use the activation function to determine the output
-#                 local_output = activate(local_output)
-#                 
-#                 # store outputs
-#                 neuron.local_output = local_output
-#                 outputs.append(local_output)
-                
+                # keep track of what inputs were sent to this neuron
+                neuron.inputs = inputs
+                # multiply each input with the associated weight for that connection
+                local_output = 0.0  
+                for input_value, weight_value in zip(inputs, neuron.weights):
+                    local_output += input_value * weight_value 
+                # then subtract the threshold value
+                local_output -= neuron.threshold
+                # finally, use the activation function to determine the output
+                local_output = activate(local_output)
+                # store outputs
+                neuron.local_output = local_output
+                outputs.append(local_output)  
             # the inputs to the next layer will be the outputs
             #    of the previous layer
             inputs = outputs   
@@ -101,29 +70,25 @@ class Network(object):
         
         """
         error = 0.0
-        computed_output_set = []
-        residual = 0
-        compute_network_output = self.compute_network_output # for performance
-        
+        num_values = 0
         # for each row of data
         for input_set, target_output_set in zip(inputs, target_outputs):
-            computed_output_set = compute_network_output(input_set)
-            
+            computed_output_set = self.compute_network_output(input_set)
             for target_output, computed_output in \
                     zip(target_output_set, computed_output_set):
                 residual = target_output - computed_output
                 error += residual*residual  # square the residual value
-        
+                num_values += 1 # keep count of number of value
         # average the error and take the square root
-        num_values = len(target_outputs) * len(target_outputs[0])
         return math.sqrt(error/num_values)
 
 
 class Layer(object):
     """A class for layers in the network"""
     
-    def __init__(self, num_neurons, num_inputs):
+    def __init__(self, num_neurons, num_inputs, activation_function):
         """Constructor"""
+        self.activation_function = activation_function
         self.neurons = []
         for _ in range(num_neurons):
             self.neurons.append(Neuron(num_inputs))
@@ -150,25 +115,20 @@ class Neuron(object):
         """
         # keep track of what inputs were sent to this neuron
         self.inputs = inputs
-        
         # multiply each input with the associated weight for that connection
         local_output = 0.0
         weights = self.weights  
         for input_value, weight_value in zip(inputs, weights):
             local_output += input_value * weight_value
-        
         # then subtract the threshold value
         local_output -= self.threshold
-        
         # finally, use the activation function to determine the output
         local_output = (activation_function.
             activate(local_output))
-        
         # store outputs
         self.local_output = local_output
-        
         return local_output
-
+    
 
 def print_network_error(network, data):
     """Print the current error for the given network"""
