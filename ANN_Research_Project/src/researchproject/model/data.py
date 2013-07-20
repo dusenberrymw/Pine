@@ -5,8 +5,6 @@ Created on Jun 6, 2013
 '''
 import os.path
 import csv
-import random
-import math
 
 
 class Data(object):
@@ -14,9 +12,9 @@ class Data(object):
     as well as the network and any other useful information
     """
     
-    def __init__(self, inputs=None, target_outputs=None, training_inputs=None,
-                 training_target_outputs=None, testing_inputs=None, 
-                 testing_target_outputs=None):
+    def __init__(self, inputs, target_outputs, training_inputs,
+                 training_target_outputs, testing_inputs, 
+                 testing_target_outputs):
         self.inputs = inputs
         self.target_outputs = target_outputs
         self.training_inputs = training_inputs

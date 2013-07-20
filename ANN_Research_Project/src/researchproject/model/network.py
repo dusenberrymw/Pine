@@ -11,23 +11,32 @@ class Network(object):
     """A class for the overall network"""
     
     def __init__(self, num_inputs, num_neurons_list, activation_functions):
-        """Constructor"""
+        """Constructor
+        
+        'num_neurons_list' = list containing the number of neurons in each
+                                layer, starting with the first hidden layer, 
+                                since we do not make objects for the input
+                                layer.
+        'activation_functions' = list containing the activation functions for
+                                    each layer
+        """
         self.layers = []
         for num_neurons, activation_function in \
                 zip(num_neurons_list, activation_functions):
             if num_neurons is None:
-                # General rules of thumb:
-                #     -The number of hidden neurons should be between the size of
-                #        the input layer and the size of the output layer.
-                #     -The number of hidden neurons should be 2/3 the size of the 
-                #        input layer, plus the size of the output layer.
-                #     -The number of hidden neurons should be less than twice the 
-                #        -size of the input layer.
+                # Then automatically determine number of neurons
+                # -general rules of thumb:
+                #     -The number of hidden neurons should be between the size
+                #        of the input layer and the size of the output layer.
+                #     -The number of hidden neurons should be 2/3 the size of 
+                #        the input layer, plus the size of the output layer.
+                #     -The number of hidden neurons should be less than twice 
+                #        the size of the input layer.
                 num_neurons = (round((2/3) * num_inputs) + 
                                num_neurons_list[-1])
-            self.layers.append(Layer(num_neurons, num_inputs, activation_function))
+            self.layers.append(Layer(num_neurons, num_inputs, 
+                                     activation_function))
             num_inputs = num_neurons # for the next layer
-    
     
     def compute_network_output(self, inputs):
         """Compute output(s) of network given one entry (row) of data"""
@@ -64,7 +73,9 @@ class Network(object):
         
         RMS error is the square root of: the sum of the squared differences 
         between target outputs and actual outputs, divided by the total number
-        of values
+        of values.  It is useful because it eliminates the need to take 
+        absolute values, which would be necessary otherwise to prevent two 
+        opposite errors from canceling out.
         
         error = sqrt( (sum(residual^2)) / num_values )
         
@@ -89,9 +100,7 @@ class Layer(object):
     def __init__(self, num_neurons, num_inputs, activation_function):
         """Constructor"""
         self.activation_function = activation_function
-        self.neurons = []
-        for _ in range(num_neurons):
-            self.neurons.append(Neuron(num_inputs))
+        self.neurons = [Neuron(num_inputs) for _ in range(num_neurons)]
 
 
 class Neuron(object):
@@ -101,13 +110,17 @@ class Neuron(object):
         """Constructor"""
         self.inputs = [] # the inputs coming from previous neurons
         self.local_output = 0.0 # the output leaving this neuron
-        self.weights = [] # need a weight for each input to the neuron
-        self.prev_weight_deltas = []
-        for _ in range(num_inputs):
-            self.weights.append(random.uniform(-1,1))
-            self.prev_weight_deltas.append(random.uniform(-1,1))
-        self.threshold = random.uniform(-1,1)
-        self.prev_threshold_delta = random.uniform(-1,1)
+        # need a weight for each input to the neuron
+        self.weights = [random.uniform(-0.9,0.9) for _ in range(num_inputs)]
+        self.threshold = random.uniform(-0.9,0.9)
+        
+        # REMOVE THESE at some point
+        self.prev_weight_deltas = [0.1]*num_inputs
+        self.prev_threshold_delta = 0.1
+        self.partial_weight_gradients = [0]*num_inputs
+        self.partial_threshold_gradient = 0
+        self.prev_partial_weight_gradients = [0]*num_inputs
+        self.prev_partial_threshold_gradient = 0
     
     def compute_output(self, inputs, activation_function):
         """Given a set of inputs from previous layer neuron,
@@ -116,9 +129,8 @@ class Neuron(object):
         # keep track of what inputs were sent to this neuron
         self.inputs = inputs
         # multiply each input with the associated weight for that connection
-        local_output = 0.0
-        weights = self.weights  
-        for input_value, weight_value in zip(inputs, weights):
+        local_output = 0.0 
+        for input_value, weight_value in zip(inputs, self.weights):
             local_output += input_value * weight_value
         # then subtract the threshold value
         local_output -= self.threshold
