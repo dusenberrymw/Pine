@@ -19,13 +19,14 @@ class Network(object):
                                 layer.
         'activation_functions' = list containing the activation functions for
                                     each layer
+                                    
         """
         self.layers = []
         for num_neurons, activation_function in \
                 zip(num_neurons_list, activation_functions):
             if num_neurons is None:
                 # Then automatically determine number of neurons
-                # -general rules of thumb:
+                # -General rules of thumb for number of nodes:
                 #     -The number of hidden neurons should be between the size
                 #        of the input layer and the size of the output layer.
                 #     -The number of hidden neurons should be 2/3 the size of 
@@ -51,23 +52,26 @@ class Network(object):
             for neuron in layer.neurons:
                 # keep track of what inputs were sent to this neuron
                 neuron.inputs = inputs
-                # multiply each input with the associated weight for that connection
+                # multiply each input with the associated weight for that 
+                #    connection
+                # Note: local_output is the "activation" of the neuron
                 local_output = 0.0  
                 for input_value, weight_value in zip(inputs, neuron.weights):
                     local_output += input_value * weight_value 
-                # then subtract the threshold value
-                local_output -= neuron.threshold
-                # finally, use the activation function to determine the output
+                # then add the threshold value
+                local_output += neuron.threshold
+                # finally, use the activation function to determine the 
+                #    activated output
                 local_output = activate(local_output)
-                # store outputs
+                # store activated output
                 neuron.local_output = local_output
                 outputs.append(local_output)  
             # the inputs to the next layer will be the outputs
             #    of the previous layer
             inputs = outputs   
-        return outputs
+        return outputs  # this will be the vector of output layer activations
     
-    def calculate_error(self, inputs, target_outputs):
+    def calculate_error(self, inputs, target_outputs, classification=False):
         """Determine the root mean square (RMS) error for the given dataset
         (multiple rows) of input data against the associated target outputs
         
@@ -109,18 +113,10 @@ class Neuron(object):
     def __init__(self, num_inputs):
         """Constructor"""
         self.inputs = [] # the inputs coming from previous neurons
-        self.local_output = 0.0 # the output leaving this neuron
+        self.local_output = 0.0 # the activation of this neuron
         # need a weight for each input to the neuron
-        self.weights = [random.uniform(-0.9,0.9) for _ in range(num_inputs)]
-        self.threshold = random.uniform(-0.9,0.9)
-        
-        # REMOVE THESE at some point
-        self.prev_weight_deltas = [0.1]*num_inputs
-        self.prev_threshold_delta = 0.1
-        self.partial_weight_gradients = [0]*num_inputs
-        self.partial_threshold_gradient = 0
-        self.prev_partial_weight_gradients = [0]*num_inputs
-        self.prev_partial_threshold_gradient = 0
+        self.weights = [random.uniform(-0.4,0.4) for _ in range(num_inputs)]
+        self.threshold = random.uniform(-0.4,0.4)
     
     def compute_output(self, inputs, activation_function):
         """Given a set of inputs from previous layer neuron,
@@ -132,8 +128,8 @@ class Neuron(object):
         local_output = 0.0 
         for input_value, weight_value in zip(inputs, self.weights):
             local_output += input_value * weight_value
-        # then subtract the threshold value
-        local_output -= self.threshold
+        # then add the threshold value
+        local_output += self.threshold
         # finally, use the activation function to determine the output
         local_output = (activation_function.
             activate(local_output))

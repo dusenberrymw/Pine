@@ -3,7 +3,7 @@ Created on Jun 6, 2013
 
 @author: dusenberrymw
 '''
-from math import exp, log, tanh, atanh, sqrt
+from math import exp, log, tanh, atanh
 from multiprocessing import Process, Queue, cpu_count
 
 
@@ -12,8 +12,8 @@ class Backpropagation(object):
     def __init__(self, learning_rate, momentum_coef):
         """ Constructor
         
-        Learning rate = degree to which the weight and threshold values will
-            be changed during each iteration of training
+        Learning rate = degree to which the parameters (weight and threshold
+            values) will be changed during each iteration of training
         Momentum = degree to which the previous learning will affect this 
             iteration's weight and threshold values. Effectively, it keeps 
             the weight values from oscillating during training
@@ -22,136 +22,111 @@ class Backpropagation(object):
         self.learning_rate = learning_rate
         self.momentum_coef = momentum_coef
 
-    def train(self, network, inputs, target_outputs, iterations, min_error):
-        """This trains the given network using the given multiple sets
+    def train(self, network, inputs, target_outputs, iterations):
+        """This trains the given network using the given vectors
         of input data (multiple rows) against the associated target outputs
         
-        Start with the output layer and find the error gradient for each 
+        Essentially look forward to determine error, then look backward to
+            change weights and threshold values (which are currently stored
+            on the current node) on connections from nodes in previous
+            (backwards) layer
+        
+        Start with the output layer and find the (lowercase) delta (partial 
+            deriv of the cost function, J, with respect to the node's input), 
+            and the gradient (partial deriv of the cost function, J, with 
+            respect to one of the weights on the incoming inputs) for each 
             output neuron.
-        Then, for each neuron in the hidden layer(s), find the error gradient.
-        Then, find the deltas and momentum of each neuron's weights and
-            threshold values and add both to each weight and threshold.
+        Then, for each neuron in the hidden layer(s), find the delta and 
+            gradient.
+        Then, update each neuron's weights and threshold value by subtracting
+            gradient multiplied by the learning rate, alpha.  Subtract because
+            the gradient (and delta values since they are both partial derivs)
+            will give direction of gradient AScent, and we want to move in the
+            opposite direction in order to lower the overall error (minimize
+            the cost function, J).
         
         """
-        num_input_sets = len(inputs)
-        num_output_sets = len(target_outputs)
-        if num_input_sets != num_output_sets:
-            print("Error: Number of input sets(%d) and target output " \
-                  "sets(%d) do not match" % (num_input_sets,num_output_sets))
-            exit(1)
-        
-        # initialize variables for the following loops
-        learning_rate = self.learning_rate
-        momentum_coef = self.momentum_coef
-        compute_network_output = network.compute_network_output # performance
-        num_values = num_output_sets * len(target_outputs[0])
-        layers = network.layers
-        
-        # start learning
-        iteration_counter = 0
-        error = network.calculate_error(inputs, target_outputs)
-        while (iteration_counter < iterations) & (error > min_error):
-            iteration_counter += 1
-            error = 0.0 # clear out the error
+        for iteration_counter in range(iterations):
             # for each row of data
-            for input_set, target_output_set in zip(inputs, target_outputs):
+            for input_vector, target_output_vector in zip(inputs, target_outputs):
                 # prime the network on this row of input data
-                #    -this will cause local_output values to be
+                #    -this will cause local_output (activation) values to be
                 #     set for each neuron
-                compute_network_output(input_set) # see above
+                network.compute_network_output(input_vector)
                            
-                # For each neuron, starting with the output layer and moving
-                #     backwards through the layers:
-                #        -find and store the error gradient
-                #        -compute and add the delta and momentum values to the
-                #            weight and threshold values
-                prev_layer_gradients = []
-                prev_layer_weights = []
+                # Note: next_layer_deltas is a vector of the single
+                #    delta values for each node in the next 
+                #    (forward) layer
+                next_layer_deltas = []
+                next_layer_weights = []
                 isOutputLayer = True
-                for layer in reversed(layers): # iterate backwards
+                for layer in reversed(network.layers): # iterate backwards
                     derivative = layer.activation_function.derivative
-                    this_layer_gradients = [] # values from current layer
+                    this_layer_deltas = [] # values from current layer
                     this_layer_weights = []
-                    for j, neuron in enumerate(layer.neurons):
-                        prev_weight_deltas = neuron.prev_weight_deltas # REMOVE THIS
-                        prev_threshold_delta = neuron.prev_threshold_delta # REMOVE THIS
-                        
-                        neuron_weights = neuron.weights
-                        computed_output = neuron.local_output
-                        
+                    for j, neuron in enumerate(layer.neurons):                        
                         # The output layer neurons are treated slightly
                         #    different than the hidden neurons
                         if isOutputLayer:
-                            # keep track of the error from this output neuron
-                            #    for use in determining how well the network
-                            #    is performing
-                            # note: only need to do this for output neurons
-                            residual = target_output_set[j] - computed_output
-                            error += residual*residual  # square the residual
-                            error_gradient = (derivative(computed_output) * 
-                                              residual)
-                        # for the hidden layer neurons
-                        else:
-                            # Need to sum the products of the error gradient of
+                            # simply subtract the target from the hypothesis
+                            delta = neuron.local_output - target_output_vector[j]
+                        else: # for the hidden layer neurons
+                            # Need to sum the products of the delta of
                             #    a neuron in the next (forward) layer and the 
                             #    weight associated with the connection between 
                             #    this hidden layer neuron and that neuron.
                             # This will basically determine how much this 
                             #    neuron contributed to the error of the neuron 
                             #    it is connected to
+                            # Note: next_layer_deltas is a vector of the single
+                            #    delta values for each node in the next 
+                            #    (forward) layer
                             sum_value = 0.0
-                            for gradient, weights in zip(prev_layer_gradients, 
-                                                         prev_layer_weights):
-                                sum_value += gradient * weights[j]
-                            error_gradient = (derivative(computed_output) * 
-                                              sum_value)
+                            for next_delta, weights in zip(next_layer_deltas, 
+                                                         next_layer_weights):
+                                sum_value +=  weights[j] * next_delta
+                            delta = (derivative(neuron.local_output) * 
+                                              sum_value) 
                         
-                        # now store the error gradient and the list of weights
+                        # now store the delta and the list of weights
                         #    for this neuron into these storage lists for the 
                         #    whole layer
-                        this_layer_gradients.append(error_gradient)
-                        this_layer_weights.append(neuron_weights)
+                        this_layer_deltas.append(delta)
+                        this_layer_weights.append(neuron.weights)
                          
-                        # Now, compute and add delta and momentum values
-                        #     for each weight associated with this neuron
-                        for k, (input_value, prev_weight_delta) in \
-                                enumerate(zip(neuron.inputs, 
-                                              prev_weight_deltas)):
-                            # delta value for this weight is equal to the
-                            #    product of the learning rate, the error
-                            #    gradient, and the input to this neuron
-                            #    on the connection associated with this weight
-                            delta = (learning_rate * error_gradient * 
-                                     input_value)
-                            # momentum value for this weight is equal to the
-                            #    product of the momentum coefficient and the
-                            #    previous delta for this weight
-                            # the momentum keeps the weight values from 
-                            #    oscillating during training
-                            momentum = momentum_coef * prev_weight_delta
-                            # now add these two values to the current weight
-                            neuron_weights[k] += delta + momentum
-                            # and update the previous weight delta value
-                            prev_weight_deltas[k] = delta
+                        # Now, compute the gradient (partial deriv of cost 
+                        #    fcn, J, w/ respect to parameter ij) for each 
+                        #    weight_ij (parameter_ij) associated with 
+                        #    this neuron
+                        for ij, input_ij in enumerate(neuron.inputs):
+                            # compute gradient (partial deriv of cost J w/
+                            #    respect to parameter ij)
+                            # Note: index ij means from a previous
+                            #    layer node i to this layer node j
+                            gradient_ij = input_ij * delta
+                            # Note: Subtract in order to minimize error, since
+                            #    partial derivs point in direction of gradient
+                            #    AScent
+                            neuron.weights[ij] -= self.learning_rate * gradient_ij
                              
-                        # now compute the delta and momentum for the threshold
-                        #   value, by using a -1 as the threshold "input value"
-                        delta = learning_rate * error_gradient * (-1)
-                        momentum = momentum_coef * prev_threshold_delta
-                        # then add these two values to the current threshold
-                        neuron.threshold += delta + momentum
-                        # and update the previous threshold delta value
-                        neuron.prev_threshold_delta = delta
+                        # Now, compute the gradient (partial deriv of cost 
+                        #    fcn, J, with respect to parameter ij) for the 
+                        #    threshold value (parameter_0j), by using a "1" as
+                        #    the threshold "input value"
+                        # -Note: index 0j means from a previous
+                        #    layer threshold node 0 (threshold always has 
+                        #    index i=0) to this layer node j
+                        #        -can also think of it as the threshold being
+                        #            internal to this neuron
+                        gradient_0j = (1) * delta
+                        neuron.threshold -= self.learning_rate * gradient_0j
                         
-                    # store the gradients and weights from the current layer
-                    #    for the next layer (moving backwards)
-                    prev_layer_gradients = this_layer_gradients
-                    prev_layer_weights = this_layer_weights
+                    # Once this layer is done, store the gradients and weights 
+                    #    from the current layer for the next layer iteration 
+                    #    (moving backwards)
+                    next_layer_deltas = this_layer_deltas
+                    next_layer_weights = this_layer_weights
                     isOutputLayer = False
-                
-            # now compute the new error before the next iteration of the
-            #    while loop by averaging the error and take the square root
-            error = sqrt(error/num_values) # using math.sqrt
         
         # Note: this is after the while loop
         self.iterations = iteration_counter        
@@ -182,11 +157,11 @@ class ResilientPropagation(object):
             weight change, and update the weights.
         
         """
-        num_input_sets = len(inputs)
-        num_output_sets = len(target_outputs)
-        if num_input_sets != num_output_sets:
+        num_input_vectors = len(inputs)
+        num_output_vectors = len(target_outputs)
+        if num_input_vectors != num_output_vectors:
             print("Error: Number of input sets(%d) and target output " \
-                  "sets(%d) do not match" % (num_input_sets,num_output_sets))
+                  "sets(%d) do not match" % (num_input_vectors,num_output_vectors))
             exit(1)
             
         iteration_counter = 0
@@ -202,11 +177,11 @@ class ResilientPropagation(object):
         #    weight/threshold for all of the inputs
         #    -this is done as "Batch Training"
         # for each row of data
-        for input_set, target_output_set in zip(inputs, target_outputs):
+        for input_vector, target_output_vector in zip(inputs, target_outputs):
             # prime the network on this row of input data
             #    -this will cause local_output values to be
             #     set for each neuron
-            network.compute_network_output(input_set) # see above
+            network.compute_network_output(input_vector) # see above
                        
             # For each neuron, starting with the output layer and moving
             #     backwards through the layers:
@@ -214,12 +189,12 @@ class ResilientPropagation(object):
             #        -determine the change in sign between this gradient
             #            and the previous one
             #        -compute the delta and weight change values
-            prev_layer_gradients = []
-            prev_layer_weights = []
+            next_layer_deltas = []
+            next_layer_weights = []
             isOutputLayer = True
             for layer in reversed(network.layers): # iterate backwards
                 derivative = layer.activation_function.derivative
-                this_layer_gradients = [] # values from current layer
+                this_layer_deltas = [] # values from current layer
                 this_layer_weights = []
                 for j, neuron in enumerate(layer.neurons):
                     neuron_weights = neuron.weights
@@ -227,7 +202,7 @@ class ResilientPropagation(object):
                     # The output layer neurons are treated slightly
                     #    different than the hidden neurons
                     if isOutputLayer:
-                        residual = target_output_set[j] - computed_output
+                        residual = target_output_vector[j] - computed_output
                         error_gradient = (derivative(computed_output) * 
                                           residual)
                     # for the hidden layer neurons
@@ -240,15 +215,15 @@ class ResilientPropagation(object):
                         #    neuron contributed to the error of the neuron 
                         #    it is connected to
                         sum_value = 0.0
-                        for gradient, weights in zip(prev_layer_gradients,
-                                                     prev_layer_weights):
+                        for gradient, weights in zip(next_layer_deltas,
+                                                     next_layer_weights):
                             sum_value += gradient * weights[j]
                         error_gradient = (derivative(computed_output) * 
                                           sum_value)
                     # now store the error gradient and the list of weights
                     #    for this neuron into these storage lists for the 
                     #    whole layer
-                    this_layer_gradients.append(error_gradient)
+                    this_layer_deltas.append(error_gradient)
                     this_layer_weights.append(neuron_weights)
                     # Now, compute, accumulate, and store the partial
                     #    derivative (partial gradient) for each weight
@@ -267,8 +242,8 @@ class ResilientPropagation(object):
                     neuron.partial_threshold_gradient += partial_gradient
                 # store the gradients and weights from the current layer
                 #    for the next layer (moving backwards)
-                prev_layer_gradients = this_layer_gradients
-                prev_layer_weights = this_layer_weights
+                next_layer_deltas = this_layer_deltas
+                next_layer_weights = this_layer_weights
                 isOutputLayer = False
                 
     def _update_weights(self, network):
@@ -331,20 +306,31 @@ class ResilientPropagation(object):
 
 
 class SigmoidActivationFunction(object):
-    """Class for one of the possible activation functions used by the network"""
+    """The Logistic (Sigmoid) activation function, which is one of the
+        possibilities that can be used by the network
+        
+    """
     def activate(self, input_value):
         """Run the input value through the sigmoid function
         This will only return values between 0 and 1
         """
-#         try:
-        # constant -1.0 can be changed to alter the steepness of the function
-        return 1.0 / (1 + exp(-1.0*input_value)) # using math.exp
-#         except OverflowError:
-#             exit()
+        try:
+            return 1.0 / (1 + exp(-1.0*input_value)) # using math.exp
+        except OverflowError:
+            # bound the numbers if there is an overflow
+            if input_value < 0:
+                return 0.00000000001  # logistic function goes to 0 for small x
+            else:
+                return 0.99999999999
     
     def derivative(self, input_value):
-        """Some training will require the derivative of the Sigmoid function"""
-        return input_value * (1.0-input_value) + 0.1 # add 0.1 to fix flat spot
+        """Some training will require the derivative of the Sigmoid function
+        
+        Given F(x) is the logistic (sigmoid) function, the derivative
+            F'(x) = F(x) * (1 - F(x))
+        
+        """
+        return input_value * (1.0-input_value) # can add 0.1 to fix flat spot
     
     def inverse(self, input_value):
         """This will produce the inverse of the sigmoid function, which is
@@ -361,7 +347,7 @@ class TanhActivationFunction(object):
     
     def derivative(self, input_value):
         """Some training will require the derivative of the tanh function"""
-        return (1.0-input_value) * (1.0+input_value) + 0.1 # add 0.1 to fix flat spot
+        return (1.0-input_value) * (1.0+input_value) # can add 0.1 to fix flat spot
     
     def inverse(self, input_value):
         """This will produce the inverse of the tanh function, which is
@@ -371,7 +357,7 @@ class TanhActivationFunction(object):
 
 
 def parallel_train(network, trainer, inputs, target_outputs, iterations, 
-                   min_error, num_processes=None):
+                   num_processes=None):
     """Train the given network using the given trainer in parallel using 
     multiple processes.
     
@@ -381,7 +367,6 @@ def parallel_train(network, trainer, inputs, target_outputs, iterations,
     if num_processes is None:
         # Determine the number of processes
         num_processes = cpu_count()
-    
     if num_processes > len(inputs):
         # there is not enough input data to split amongst the entire possible
         #    number of processes, so reduce the number of processes used
@@ -403,7 +388,7 @@ def parallel_train(network, trainer, inputs, target_outputs, iterations,
                     args=(network, trainer, 
                           inputs[process_num::num_processes],
                           target_outputs[process_num::num_processes], 
-                          iterations, min_error, results_queue))
+                          iterations, results_queue))
                     for process_num in range(num_processes-1)]
     # start the processes
     for job in jobs: job.start()
@@ -414,7 +399,7 @@ def parallel_train(network, trainer, inputs, target_outputs, iterations,
     _parallel_train_worker(network, trainer, 
                            inputs[num_processes-1::num_processes], 
                            target_outputs[num_processes-1::num_processes], 
-                           iterations, min_error, results_queue)
+                           iterations, results_queue)
     
     # retrieve the trained networks as they come in
     #    -Note: this is necessary because the multiprocess Queue is actually
@@ -429,39 +414,27 @@ def parallel_train(network, trainer, inputs, target_outputs, iterations,
     
     # now average out the training networks into the master network
     #    by averaging the weights and threshold values
-    for i, layer in enumerate(network.layers):
+    for l, layer in enumerate(network.layers):
         for j, neuron in enumerate(layer.neurons):
             # average out weights
-            for k in range(len(neuron.weights)):
+            for ij in range(len(neuron.weights)):
                 weight_sum = 0.0
-                prev_weight_delta_sum = 0.0
-                prev_partial_weight_gradients_sum = 0.0
                 for trained_network in training_networks:
-                    weight_sum += trained_network.layers[i].neurons[j].weights[k]
-                    prev_weight_delta_sum += trained_network.layers[i].neurons[j].prev_weight_deltas[k]
-                    prev_partial_weight_gradients_sum += trained_network.layers[i].neurons[j].prev_partial_weight_gradients[k]
-                neuron.weights[k] = weight_sum/len(training_networks)
-                neuron.prev_weight_deltas[k] = prev_weight_delta_sum/len(training_networks)
-                neuron.prev_partial_weight_gradients[k] = prev_partial_weight_gradients_sum/len(training_networks)
+                    weight_sum += trained_network.layers[l].neurons[j].weights[ij]
+                neuron.weights[ij] = weight_sum/len(training_networks)
             # average out thresholds
             threshold_sum = 0.0
-            prev_threshold_delta_sum = 0.0
-            prev_partial_threshold_gradient_sum = 0.0
             for trained_network in training_networks:
-                    threshold_sum += trained_network.layers[i].neurons[j].threshold
-                    prev_threshold_delta_sum += trained_network.layers[i].neurons[j].prev_threshold_delta
-                    prev_partial_threshold_gradient_sum += trained_network.layers[i].neurons[j].prev_partial_threshold_gradient
+                    threshold_sum += trained_network.layers[l].neurons[j].threshold
             neuron.threshold = threshold_sum/len(training_networks)
-            neuron.prev_threshold_delta = prev_threshold_delta_sum/len(training_networks)
-            neuron.prev_partial_threshold_gradient = prev_partial_threshold_gradient_sum/len(training_networks)
 
 
 def _parallel_train_worker(network, trainer, inputs, target_outputs, 
-                           iterations, min_error, results_queue):
+                           iterations, results_queue):
     """This private function is run by a parallel process to train the
     network on a given subset of the training data"""
     trainer.train(network, inputs, target_outputs, 
-                  iterations, min_error)
+                  iterations)
     # return this trained network back to the main process by placing it on
     #    the queue
     results_queue.put(network)          

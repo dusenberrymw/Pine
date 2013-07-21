@@ -3,8 +3,7 @@ Created on Jun 6, 2013
 
 @author: dusenberrymw
 '''
-import os.path
-import csv
+import os.path, csv, random
 
 
 class Data(object):
@@ -34,13 +33,14 @@ def ct_data():
                            './data/CT_Data_Edited.csv'), 
                            newline='') as data_file:
             data_reader = csv.reader(data_file, delimiter=',', quotechar='|')
-            for row in data_reader:
-                row_length = len(row)
-                temp_list = [int(x) for x in row]
-                inputs.append(temp_list[:row_length-1])
-                target_outputs.append(temp_list[row_length-1:row_length])
-    
+            data = [row for row in data_reader]
             data_file.close()
+    random.shuffle(data)
+    for row in data:
+        row_length = len(row)
+        temp_list = [int(x) for x in row]
+        inputs.append(temp_list[:row_length-1])
+        target_outputs.append(temp_list[row_length-1:row_length])
 
     # build the training and testing sets
     training_inputs = inputs[::2] # take every other item
@@ -67,6 +67,7 @@ def iris_data():
             data_file.close()
     
     # Pull the inputs and target outputs out of the data
+    random.shuffle(data)
     inputs = []
     target_outputs = []
     for row in data:
@@ -75,14 +76,14 @@ def iris_data():
         inputs.append([float(x) for x in row[:row_length-1]])
         output = row[row_length-1]
         if output == 'Iris-setosa':
-#             output = [1,0,0]
-            output = [-1]
+            output = [1,0,0]
+#             output = [-1]
         elif output == 'Iris-versicolor':
-#             output = [0,1,0]
-            output = [0]
+            output = [0,1,0]
+#             output = [0]
         elif output == 'Iris-virginica':
-#             output = [0,0,1]
-            output = [1]
+            output = [0,0,1]
+#             output = [1]
         target_outputs.append(output)
     
     # build the training and testing sets
@@ -116,6 +117,7 @@ def letter_recognition_data():
             data_file.close()
     
     # Pull the inputs and target outputs out of the data
+    random.shuffle(data)
     inputs = []
     target_outputs = []
     for row in data:
@@ -123,10 +125,10 @@ def letter_recognition_data():
         inputs.append([int(x) for x in row[1:]])
         character = row[0].lower() # this is a letter of alphabet
         number = ord(character) - 96 # ascii - 96 = letter number
-#         output = [0] * 26 # 26 letters
-#         output[number-1] = 1 # set to 1
-#         target_outputs.append(output)
-        target_outputs.append([number/26])
+        output = [0] * 26 # 26 letters
+        output[number-1] = 1 # set to 1
+        target_outputs.append(output)
+#         target_outputs.append([number/26])
     
 #     # train on first 16000
 #     training_inputs = inputs[:16000]
@@ -150,8 +152,13 @@ def xor_data():
     """Return a data object containing the training and testing data for the
     XOR logic test project
     """
-    inputs = [[0,0],[1,0],[0,1],[1,1]]
-    target_outputs = [[0],[1],[1],[0]]
+    data = [ [[0,0],[0]], [[1,0],[1]], [[0,1],[1]], [[1,1],[0]] ]
+    random.shuffle(data)
+    inputs = []
+    target_outputs = []
+    for row in data:
+        inputs.append(row[0])
+        target_outputs.append(row[1])
     training_inputs = inputs
     training_target_outputs = target_outputs
     testing_inputs = training_inputs
