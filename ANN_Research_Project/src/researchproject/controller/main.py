@@ -15,6 +15,7 @@ from multiprocessing import cpu_count
 import time
 
 # constants for the different projects
+AND_PROJECT = 0
 XOR_PROJECT = 1
 IRIS_PROJECT = 2
 CT_PROJECT = 3
@@ -30,25 +31,28 @@ def main(project):
     """
     # build the params for the project
     params = build_project_params(project)
-    data = params['data']
+    training_data = params['training_data']
+    testing_data = params['testing_data']
     iterations = params['iterations']
     num_processes = params['num_processes']
     
     # create the network
-    network = Network(len(params['data'].training_inputs[0]), 
+    network = Network(len(params['training_data'][0][1]), 
                       params['num_neurons_list'],
                       params['activation_functions'])
     # Test the network
 #     network2 = copy.deepcopy(network)
 #     test_run(network2, params)
     
-    print('\nNumber of hidden neurons: {0}'.format(len(network.layers[0].neurons)))
+    print()
+    for i in range(len(network.layers)-1):
+        print('Number of hidden neurons: {0}'.format(len(network.layers[i].neurons)))
     print('Number of output neurons: {0}'.format(len(network.layers[-1].neurons)))
     print('Number of total layers: {0}'.format(len(network.layers)))
     
     # test the network
     print("\nBefore training")
-    network_module.print_network_error(network, params['data'])
+    network_module.print_network_error(network, training_data, testing_data)
     
     # train the network
     trainer = training.Backpropagation(params['learning_rate'], 
@@ -56,20 +60,21 @@ def main(project):
 #     trainer = training.ResilientPropagation()
     
     i = 0
-#     error = network.calculate_error(params['data'].training_inputs, 
+#     error = network.calculate_RMS_error(params['data'].training_inputs, 
 #                                     params['data'].training_target_outputs)
-    while ((i*params['iterations'])<1000):#& (error > params['min_error']):
-        training.parallel_train(network, trainer, data.training_inputs, 
-                                data.training_target_outputs, iterations,
+    while ((i*params['iterations'])<3):#& (error > params['min_error']):
+        training.parallel_train(network, trainer, training_data, iterations,
                                 num_processes)
 #         trainer.train(network, data.training_inputs, data.training_target_outputs, iterations)
         
         # check the new error on the master network
         print("\nMaster Network:")
-        network_module.print_network_error(network, params['data'])
-#         error = network.calculate_error(params['data'].training_inputs, 
+        error = network.calculate_RMS_error(testing_data)   
+        print('Error w/ Test Data: {0}'.format(error))
+#         network_module.print_network_error(network, training_data, testing_data)
+#         error = network.calculate_RMS_error(params['data'].training_inputs, 
 #                                     params['data'].training_target_outputs)
-        print("Iteration number: {0}".format(i*params['iterations']))
+        print("Iteration number: {0}".format((i+1)*params['iterations']))
         i +=1
 #         print('{0}\t{1}'.format(params['learning_rate'], params['momentum_coef']))
 #           
@@ -80,9 +85,9 @@ def main(project):
 #         trainer.momentum_coef = params['momentum_coef']
     
     print("\nAfter Training\n")
-    network_module.print_network_outputs(network, params['data'])
+    network_module.print_network_outputs(network, testing_data)
     print()
-    network_module.print_network_error(network, params['data'])
+    network_module.print_network_error(network, training_data, testing_data)
     print('Iterations: {0}'.format(i*params['iterations']))
 
 
@@ -103,37 +108,44 @@ def build_project_params(project):
     params['momentum_coef_change'] = 0
     
     # Get the project's data and any overrides to the defaults
-    if project == XOR_PROJECT:
+    if project == AND_PROJECT:
+        params['data'] = data_module.and_data()
+        params['activation_functions'] = [training.LogisticActivationFunction()]
+        params['num_neurons_list'] = [1] # just single layer perceptron
+        params['learning_rate'] = 0.2
+        params['iterations'] = 1
+        params['num_processes'] = 1
+    elif project == XOR_PROJECT:
         params['data'] = data_module.xor_data()
-        params['activation_functions'] = [training.SigmoidActivationFunction()] * 2
-        params['num_neurons_list'] = [3,1]
-        params['learning_rate'] = 0.9 # 0.9
+        params['activation_functions'] = [training.TanhActivationFunction(), training.LogisticActivationFunction()]
+        params['num_neurons_list'] = [5,1]
+        params['learning_rate'] = 0.2 # 0.9
         params['momentum_coef'] = 0.0
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == IRIS_PROJECT:
-        params['data'] = data_module.iris_data()
-        params['activation_functions'] = [training.SigmoidActivationFunction()] * 2
+        params['training_data'], params['testing_data'] = data_module.iris_data()
+        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [10, 3]
-        params['learning_rate'] = 0.007 #0.007
+        params['learning_rate'] = 0.02 #0.007
         params['momentum_coef'] = 0.0 #0.4
         params['learning_rate_change'] = -0.00 #0.2
         params['momentum_coef_change'] = 0.00 #0.2
-        params['iterations'] = 5
+        params['iterations'] = 10
 #         params['num_processes'] = 1
     elif project == LETTER_RECOG_PROJECT:
-        params['data'] = data_module.letter_recognition_data()
-        params['activation_functions'] = [training.SigmoidActivationFunction()] * 2
-        params['num_neurons_list'] = [50, 26]
-        params['learning_rate'] = 0.2
-        params['momentum_coef'] = 0.5 
+        params['training_data'], params['testing_data'] = data_module.letter_recognition_data()
+        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
+        params['num_neurons_list'] = [80, 26]
+        params['learning_rate'] = 0.2 #0.2
+        params['momentum_coef'] = 0.0 
         params['learning_rate_change'] = 0.0 #0.2
         params['momentum_coef_change'] = 0.0 #0.2
-        params['iterations'] = 2
+        params['iterations'] = 1
     elif project == CT_PROJECT:
         params['data'] = data_module.ct_data()
         params['num_neurons_list'] = [20,1]
-        params['activation_functions'] = [training.SigmoidActivationFunction()] * 2
+        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['learning_rate'] = 0.001
         params['momentum_coef'] = 0.5
         params['learning_rate_change'] = 0.0 #0.0
@@ -179,13 +191,16 @@ if __name__ == '__main__':
     # this will be used for timing the code
     start_time = time.clock()
     
+    # 0 = AND
     # 1 = XOR
     # 2 = Iris
     # 3 = CT
     # 4 = letter recognition
     project = 4
     
-    if project == XOR_PROJECT:
+    if project == AND_PROJECT:
+        print("Running AND test project\n")
+    elif project == XOR_PROJECT:
         print("Running XOR test project\n")
     elif project == IRIS_PROJECT:
         print("Running Iris test project\n")

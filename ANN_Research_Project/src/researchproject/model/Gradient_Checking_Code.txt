@@ -1,0 +1,33 @@
+# Essentially, the gradient is the partial derivative of the cost function, 
+#   J(theta), with respect to the parameter theta_ij.  Thus we can manually
+#   check our code by evaluating J at values just slightly above and below
+#   theta, plot a line between the resulting values of J, and use rise/run
+#   determine the slope, which is an estimation of the partial derivative
+#
+#   This lets us check the correctness of our code
+#
+#   -Use in the training methods where the "gradient" is computed
+
+
+# Gradient checking:
+epsilon = 0.0001
+old_theta = neuron.weights[ij]
+neuron.weights[ij] = neuron.weights[ij] + epsilon
+J1 = network.cost_J(input_vector, target_output_vector)
+neuron.weights[ij] = old_theta
+neuron.weights[ij] = neuron.weights[ij] - epsilon
+J2 = network.cost_J(input_vector, target_output_vector)
+estimated_gradient = (J1 - J2) / (2*epsilon)
+neuron.weights[ij] = old_theta
+    
+    
+# Gradient checking:
+epsilon = 0.0001
+old_theta = neuron.threshold
+neuron.threshold = neuron.threshold + epsilon
+J1 = network.cost_J(input_vector, target_output_vector)
+neuron.threshold = old_theta
+neuron.threshold = neuron.threshold - epsilon
+J2 = network.cost_J(input_vector, target_output_vector)
+estimated_gradient = (J1 - J2) / (2*epsilon)
+neuron.threshold = old_theta

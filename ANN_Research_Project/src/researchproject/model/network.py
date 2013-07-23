@@ -14,9 +14,8 @@ class Network(object):
         """Constructor
         
         'num_neurons_list' = list containing the number of neurons in each
-                                layer, starting with the first hidden layer, 
-                                since we do not make objects for the input
-                                layer.
+                                layer after the input layer, since we do
+                                not make objects for the inputs
         'activation_functions' = list containing the activation functions for
                                     each layer
                                     
@@ -39,11 +38,11 @@ class Network(object):
                                      activation_function))
             num_inputs = num_neurons # for the next layer
     
-    def compute_network_output(self, inputs):
-        """Compute output(s) of network given one entry (row) of data"""
+    def compute_network_output(self, input_vector):
+        """Compute output(s) of network given one entry vector (row) of data"""
         for layer in self.layers:
             activate = layer.activation_function.activate
-            outputs = []
+            output_vector = []
             # the first layer is the hidden neurons,
             #    so the inputs are those supplied to the
             #    network
@@ -51,12 +50,12 @@ class Network(object):
             #    be the outputs of the previous layer
             for neuron in layer.neurons:
                 # keep track of what inputs were sent to this neuron
-                neuron.inputs = inputs
+                neuron.inputs = input_vector
                 # multiply each input with the associated weight for that 
                 #    connection
                 # Note: local_output is the "activation" of the neuron
                 local_output = 0.0  
-                for input_value, weight_value in zip(inputs, neuron.weights):
+                for input_value, weight_value in zip(input_vector, neuron.weights):
                     local_output += input_value * weight_value 
                 # then add the threshold value
                 local_output += neuron.threshold
@@ -65,13 +64,13 @@ class Network(object):
                 local_output = activate(local_output)
                 # store activated output
                 neuron.local_output = local_output
-                outputs.append(local_output)  
+                output_vector.append(local_output)  
             # the inputs to the next layer will be the outputs
             #    of the previous layer
-            inputs = outputs   
-        return outputs  # this will be the vector of output layer activations
+            input_vector = output_vector   
+        return output_vector  # this will be the vector of output layer activations
     
-    def calculate_error(self, inputs, target_outputs, classification=False):
+    def calculate_RMS_error(self, examples, classification=False):
         """Determine the root mean square (RMS) error for the given dataset
         (multiple rows) of input data against the associated target outputs
         
@@ -87,15 +86,29 @@ class Network(object):
         error = 0.0
         num_values = 0
         # for each row of data
-        for input_set, target_output_set in zip(inputs, target_outputs):
-            computed_output_set = self.compute_network_output(input_set)
+        for example in examples:
+            computed_output_set = self.compute_network_output(example[1])
             for target_output, computed_output in \
-                    zip(target_output_set, computed_output_set):
+                    zip(example[0], computed_output_set):
                 residual = target_output - computed_output
                 error += residual*residual  # square the residual value
                 num_values += 1 # keep count of number of value
         # average the error and take the square root
         return math.sqrt(error/num_values)
+    
+    def cost_J(self, input_vector, target_output_vector):
+        """Determine the overall cost J(theta) for the network
+        
+        The overal cost, J(theta), is the overall "error" of the network
+            with respect to parameter (weight) theta, and is equal to the 
+            sum of the cost functions for each node in the output layer,
+            evaluated at the given training example
+        
+        """
+        output_layer = self.layers[-1]
+        cost_func = output_layer.activation_function.cost
+        hypothesis_vector = self.compute_network_output(input_vector)
+        return sum([cost_func(hypothesis_vector[i], target_output_vector[i]) for i in range(len(output_layer.neurons))])
 
 
 class Layer(object):
@@ -115,8 +128,8 @@ class Neuron(object):
         self.inputs = [] # the inputs coming from previous neurons
         self.local_output = 0.0 # the activation of this neuron
         # need a weight for each input to the neuron
-        self.weights = [random.uniform(-0.4,0.4) for _ in range(num_inputs)]
-        self.threshold = random.uniform(-0.4,0.4)
+        self.weights = [random.uniform(-0.9,0.9) for _ in range(num_inputs)]
+        self.threshold = random.uniform(-0.9,0.9)
     
     def compute_output(self, inputs, activation_function):
         """Given a set of inputs from previous layer neuron,
@@ -138,21 +151,19 @@ class Neuron(object):
         return local_output
     
 
-def print_network_error(network, data):
+def print_network_error(network, training_data, testing_data):
     """Print the current error for the given network"""
-    error = network.calculate_error(data.training_inputs, 
-                                    data.training_target_outputs)   
+    error = network.calculate_RMS_error(training_data)   
     print('Error w/ Training Data: {0}'.format(error))
-    error = network.calculate_error(data.testing_inputs, 
-                                    data.testing_target_outputs)   
+    error = network.calculate_RMS_error(testing_data)   
     print('Error w/ Test Data: {0}'.format(error))
 
     
-def print_network_outputs(network, data):
+def print_network_outputs(network, testing_data):
     """Print the given network's outputs on the test data"""
-    for i in range(len(data.testing_inputs)):
-        outputs = network.compute_network_output(data.testing_inputs[i])
+    for i in range(len(testing_data)):
+        outputs = network.compute_network_output(testing_data[i][1])
         print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
-              format(data.testing_inputs[i], data.testing_target_outputs[i], 
+              format(testing_data[i][1], testing_data[i][0], 
                      outputs))
 
