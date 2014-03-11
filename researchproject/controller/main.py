@@ -5,7 +5,7 @@ Created on Jun 6, 2013
 '''
 
 import sys,os.path
-sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
+#sys.path.append(os.path.join(os.path.dirname(__file__), '../..'))
 
 from researchproject.model.network import Network
 from researchproject.model import network as network_module
@@ -62,7 +62,7 @@ def main(project):
     i = 0
 #     error = network.calculate_RMS_error(params['data'].training_inputs, 
 #                                     params['data'].training_target_outputs)
-    while ((i*params['iterations'])<3):#& (error > params['min_error']):
+    while ((i*params['iterations'])<2000):#& (error > params['min_error']):
         training.parallel_train(network, trainer, training_data, iterations,
                                 num_processes)
 #         trainer.train(network, data.training_inputs, data.training_target_outputs, iterations)
@@ -116,8 +116,9 @@ def build_project_params(project):
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == XOR_PROJECT:
-        params['data'] = data_module.xor_data()
-        params['activation_functions'] = [training.TanhActivationFunction(), training.LogisticActivationFunction()]
+        params['training_data'], params['testing_data'] = data_module.xor_data()
+#         params['activation_functions'] = [training.TanhActivationFunction(), training.LogisticActivationFunction()]
+        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [5,1]
         params['learning_rate'] = 0.2 # 0.9
         params['momentum_coef'] = 0.0
@@ -131,7 +132,7 @@ def build_project_params(project):
         params['momentum_coef'] = 0.0 #0.4
         params['learning_rate_change'] = -0.00 #0.2
         params['momentum_coef_change'] = 0.00 #0.2
-        params['iterations'] = 10
+        params['iterations'] = 1
 #         params['num_processes'] = 1
     elif project == LETTER_RECOG_PROJECT:
         params['training_data'], params['testing_data'] = data_module.letter_recognition_data()
@@ -196,7 +197,7 @@ if __name__ == '__main__':
     # 2 = Iris
     # 3 = CT
     # 4 = letter recognition
-    project = 4
+    project = 1
     
     if project == AND_PROJECT:
         print("Running AND test project\n")

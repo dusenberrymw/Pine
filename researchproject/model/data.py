@@ -29,6 +29,14 @@ def parse_data(data_file, only_predict=False):
         "[target1[,target2[,...]]] | input1[,input2[,...]]"
     
     """
+    # make a regex that looks for the above pattern, and captures the 
+    #    targets list (separated with commas) and inputs list (separated 
+    #    with commas).
+    # Note: The '?:' part causes the group (which is defined within the 
+    #    parentheses) to NOT be backreferenced, or in other words, a match
+    #    to the regex will not save this group.  We use this so that we can
+    #    apply '*' or '?' to a certain group, but in the end we only want the
+    #    entire targets group and entire inputs group.
     p = re.compile('^((?:[\d]+(?:[.][\d]+)?(?:,[\d]+(?:[.][\d]+)?)*)?) [|] ([\d]+(?:[.][\d]+)?(?:,[\d]+(?:[.][\d]+)?)+)$')
     examples = []
     row_index = 1
@@ -47,7 +55,6 @@ def parse_data(data_file, only_predict=False):
             print("Error on row #{0}: '{1}'".format(row_index, row))
             print("Input must be numerical and in format: [target1[,target2[,...]]] | input1[,input2[,...]]")
             exit()
-    random.shuffle(examples)
     return examples
     
     
@@ -188,22 +195,23 @@ def xor_data():
     """Return a data object containing the training and testing data for the
     XOR logic test project
     """
-    data = [ [[0,0],[0]], [[1,0],[1]], [[0,1],[1]], [[1,1],[0]] ]
+    data = [ [[0],[0,0]], [[1],[1,0]], [[1],[0,1]], [[0],[1,1]] ]
     random.shuffle(data)
-    inputs = []
-    target_outputs = []
-    for row in data:
-        inputs.append(row[0])
-        target_outputs.append(row[1])
-    training_inputs = inputs
-    training_target_outputs = target_outputs
-    testing_inputs = training_inputs
-    testing_target_outputs = training_target_outputs
+#     inputs = []
+#     target_outputs = []
+#     for row in data:
+#         inputs.append(row[0])
+#         target_outputs.append(row[1])
+#     training_inputs = inputs
+#     training_target_outputs = target_outputs
+#     testing_inputs = training_inputs
+#     testing_target_outputs = training_target_outputs
     
-    # Store the data in an object
-    return Data(inputs, target_outputs, training_inputs, 
-                training_target_outputs, testing_inputs, 
-                testing_target_outputs)
+#     # Store the data in an object
+#     return Data(inputs, target_outputs, training_inputs, 
+#                 training_target_outputs, testing_inputs, 
+#                 testing_target_outputs)
+    return data, data
     
 
 def and_data():

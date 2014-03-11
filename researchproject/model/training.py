@@ -23,7 +23,7 @@ class Backpropagation(object):
         self.learning_rate = learning_rate
         self.momentum_coef = momentum_coef
 
-    def train(self, network, training_examples, iterations):
+    def train(self, network, training_examples, iterations, unsupervised=False):
         """This trains the given network using the given example vectors
         of input data (index 1 for each example) against the associated 
         target output(s) (index 0 for each example)
@@ -48,6 +48,24 @@ class Backpropagation(object):
             the cost function, J).
         
         """
+        if unsupervised:
+            # For now this means we are training a sparse autoencoder.
+            #    Therefore, we need to keep a running estimate of the
+            #    "sparsity" of a node, where we try to keep the activation
+            #    of the node stay close to a small value near 0 known as
+            #    rho (Greek lower case p) or the 'sparsity parameter', 
+            #    which we will set to 0.05.
+            # This forces the network to learn the smallest set of features
+            #    necessary to accurately build a close estimate of the original
+            #    input vector
+            # In this case, we set the input vector equal to the target vector,
+            #    and usually set a smaller value for the number of hidden nodes
+            # Then perform normal backpropagation, and during that, for each
+            #    hidden node, also update the rho_estimate, and then update the
+            #    threshold value
+            rho = 0.05
+            rho_estimates = [0] * len(network.layers[0].neurons) # set to 0 for each node
+            beta = 0.2 # the learning rate for updating the threshold terms
         for iteration_counter in range(iterations):
             # for each row of data
             for training_example in training_examples:
@@ -73,9 +91,11 @@ class Backpropagation(object):
                         #    different than the hidden neurons
                         if isOutputLayer:
                             if layer.activation_function.name == "Logistic":
-                                # simply subtract the target from the hypothesis
+                                # derivative simplifies down to just 
+                                #    subtracting the target from the 
+                                #    hypothesis
                                 delta = neuron.local_output - target_output_vector[j]
-                            else: # Tanh
+                            else: # Tanh or Linear
                                 delta = (neuron.local_output-target_output_vector[j])*derivative(neuron.local_output)
                         else: # for the hidden layer neurons
                             # Need to sum the products of the delta of
@@ -126,7 +146,12 @@ class Backpropagation(object):
                         #            internal to this neuron
                         gradient_0j = delta * 1            
                         neuron.threshold -= self.learning_rate * gradient_0j
-                    # Once this layer is done, store the gradients and weights 
+                        if unsupervised and not isOutputLayer:
+                            rho_estimates[j] = (0.999*rho_estimates[j] + 
+                                                0.001*neuron.local_output)
+                            neuron.threshold -= (self.learning_rate * beta * 
+                                                 (rho_estimates[j] - rho))
+                    # Once this layer is done, store the gradients and weights
                     #    from the current layer for the next layer iteration 
                     #    (moving backwards)
                     next_layer_deltas = this_layer_deltas
@@ -217,28 +242,53 @@ class TanhActivationFunction(object):
         return atanh(input_value) # using math.atanh
     
     def cost(self, hypothesis_output, target_output):
-        """Cost function of a node using the Logistic activation function
+        """Cost function of a node using the Tanh activation function
         
-        cost_theta(h_theta(x), y) = -log(h_theta(x))   if y = 1
-                                    -log(1-h_theta(x)) if y = 0
-                where h_theta(x) is the hypothesis (computed output) of the 
-                    node evaluated with respect to theta (parameter/weight)
-                    evaluated at input x,
-                and cost_theta is the "error" of the node with respect to 
-                    theta (parameter/weight) evaluated at the hypothesis of x
-                    given the target value y
-        
-        This cost function essentially allows for no error if the hypothesis
-            is equal to the target y, and high error otherwise
+        cost_theta(h_theta(x), y) = (1/2)*(|h_theta(x)-y|^2)
         
         """
         y = target_output
         h_x = hypothesis_output
         return (1/2)*(math.fabs(h_x-y)**2)
+    
+
+class LinearActivationFunction(object):
+    """The Linear activation function, which is one of the
+        possibilities that can be used by the network
+    
+    """
+    def __init__(self):
+        self.name = "Linear"
+        
+    def activate(self, input_value):
+        """In the linear function, f(z) = z"""
+        return input_value
+    
+    def derivative(self, input_value):
+        """Some training will require the derivative of the linear function
+        which is just 1
+        """
+        return 1
+    
+    def inverse(self, input_value):
+        """This will produce the inverse of the linear function, which is
+        useful in determining the original value before activation
+        """
+        return input_value
+    
+    def cost(self, hypothesis_output, target_output):
+        """Cost function of a node using the Linear activation function
+        
+        cost_theta(h_theta(x), y) = (1/2)*((h_theta(x)-y)^2)
+        
+        """
+        y = target_output
+        h_x = hypothesis_output
+        return (1/2)*((h_x-y)**2)
 
 
 def parallel_train(network, trainer, training_examples, iterations, 
-                   num_processes=None):
+                   unsupervised=False, num_processes=None):
     """Train the given network using the given trainer in parallel using 
     multiple processes.
     
@@ -261,28 +311,33 @@ def parallel_train(network, trainer, training_examples, iterations,
     # Train the training networks on a subset of the data
     #    -this is where the parallelization will occur
     #    -To get the training data subset for each process:
-    #        -start with the nth element, where n is this processes number, and
-    #            skip by x elements, where x is the total number of processes
+    #        -chunk the examples up into the correct number for the
+    #            number of processes, and take each chunk
     #    -Note: when this process is created, a copy of any object that is 
     #        accessed will be made, so no need to make a copy of the given 
     #        network first
+    chunk_amount = int(len(training_examples)/num_processes)
     jobs = [Process(target=_parallel_train_worker, 
                     args=(network, trainer, 
-                          training_examples[process_num::num_processes], 
-                          iterations, results_queue))
+                          training_examples[process_num*chunk_amount:
+                                            (process_num*chunk_amount)+
+                                            chunk_amount],
+                          iterations, results_queue, True, unsupervised))
                     for process_num in range(num_processes-1)]
     # start the processes
     for job in jobs: job.start()
-    
+      
     # while those processes are running, perform this process's work as well
     #    -Note: this process counts as one of the processes, so set to the 
     #        last process number possible
     #    -Note: no need to copy this network onto the Queue (that would be
     #        redundant
+    start_index = int((num_processes-1)*chunk_amount)
     _parallel_train_worker(network, trainer, 
-                           training_examples[num_processes-1::num_processes], 
-                           iterations, results_queue, False)
-    
+                           training_examples[start_index:
+                                             start_index+chunk_amount], 
+                           iterations, results_queue, False, unsupervised)
+
     # retrieve the trained networks as they come in
     #    -Note: this is necessary because the multiprocess Queue is actually
     #        a pipe, and has a maximum size limit.  Therefore, it will not work
@@ -313,7 +368,7 @@ def parallel_train(network, trainer, training_examples, iterations,
 
 def _parallel_train_worker(network, trainer, training_examples, 
                            iterations, results_queue,
-                           return_results_on_queue=True):
+                           return_results_on_queue=True, unsupervised=False):
     """This private function is run by a parallel process to train the
     network on a given subset of the training data
     
@@ -322,7 +377,7 @@ def _parallel_train_worker(network, trainer, training_examples,
         editing its network
     
     """
-    trainer.train(network, training_examples, iterations)
+    trainer.train(network, training_examples, iterations, unsupervised)
     if return_results_on_queue:
         # return this trained network back to the main process by placing it on
         #    the queue

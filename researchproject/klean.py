@@ -6,8 +6,8 @@ Created on Jul 22, 2013
 '''
 
 import argparse, pickle, csv
-from researchproject.model import network as network_module
-from researchproject.model import training, data
+from model import network as network_module
+from model import training, data
 
 parser = argparse.ArgumentParser(description='Klean: Neural Network Machine Learning')
 parser.add_argument('examples_file', type=argparse.FileType('r'), 
@@ -22,16 +22,17 @@ parser.add_argument('network_layout', help='number of nodes in each layer \
                                             is a network with 4 inputs, \
                                             10 nodes in a hidden layer, and 1 \
                                             output node.')
-parser.add_argument('-l', '--learning_rate', type=float, default=0.1)
+parser.add_argument('-l', '--learning_rate', type=float, default=0.05)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
 parser.add_argument('-f', '--model_output', default=None, type=argparse.FileType('wb'))
 parser.add_argument('-i', '--model_input', default=None, type=argparse.FileType('rb'))
 parser.add_argument('-t', '--testing', action='store_true', default=False)
 parser.add_argument('-op', '--only_predict', action='store_true', default=False)
+parser.add_argument('-u', '--unsupervised', action='store_true', default=False)
 parser.add_argument('-pf', '--predictions_file', default=None, type=argparse.FileType('w'))
-parser.add_argument('-sp', '--single_process', action='store_const', const=1, default=None,
-                    help='add to limit program to a single process')
+parser.add_argument('-np', '--num_processes', type=int, default=None,
+                    help='add to limit program to a certain number of processes')
 
 # get args from command line
 args = parser.parse_args()
@@ -43,6 +44,7 @@ examples = data.parse_data(args.examples_file, args.only_predict)
 if args.model_input:
     # load in network
     network = pickle.load(args.model_input)
+    args.model_input.close()
 else:
     # build network
     try:
@@ -89,14 +91,19 @@ elif args.testing:
 else: # train
     # now train on the examples
     trainer = training.Backpropagation(args.learning_rate, args.momentum)
-    for i in range(args.passes):
-        training.parallel_train(network, trainer, examples, 1, args.single_process)    
+#    for i in range(args.passes):
+    training.parallel_train(network, trainer, examples, args.passes, 
+                            args.unsupervised, args.num_processes)    
     # and print error
     error = network.calculate_RMS_error(examples)   
     print('Error w/ Training Data: {0}'.format(error))
     if args.model_output:
         # save the network
         pickle.dump(network, args.model_output)
+    elif args.model_input:
+        i = open(args.model_input.name, 'wb')
+        pickle.dump(network, i)
+        i.close()
     if args.predictions_file:
         # write the predictions
         writer = csv.writer(args.predictions_file)
