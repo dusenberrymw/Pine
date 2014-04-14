@@ -4,13 +4,19 @@ Created on Jul 22, 2013
 
 @author: dusenberrymw
 '''
+import argparse
+import pickle
+import csv
+import sys
+import os.path
+sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
-import argparse, pickle, csv
-from model import network as network_module
-from model import training, data
+import pine.network
+import pine.training
+import pine.data
 
-parser = argparse.ArgumentParser(description='Klean: Neural Network Machine Learning')
-parser.add_argument('examples_file', type=argparse.FileType('r'), 
+parser = argparse.ArgumentParser(description='Pine: Python Neural Network')
+parser.add_argument('examples_file', type=argparse.FileType('r'),
                     help='A txt file containing examples for training \
                           or predicting.\
                           Expects examples file to be of format: \
@@ -38,7 +44,7 @@ parser.add_argument('-np', '--num_processes', type=int, default=None,
 args = parser.parse_args()
 
 # get data
-examples = data.parse_data(args.examples_file, args.only_predict)
+examples = pine.data.parse_data(args.examples_file, args.only_predict)
 
 # get/make a network
 if args.model_input:
@@ -48,14 +54,14 @@ if args.model_input:
 else:
     # build network
     try:
-        network_layout = [int(num_nodes) for num_nodes in 
+        network_layout = [int(num_nodes) for num_nodes in
                           args.network_layout.split(",")]
         num_inputs = network_layout[0]
         network_layout = network_layout[1:]
     except ValueError:
         print("\nError: Network layout must be in format: #[,#[,...]],# beginning with input layer, and ending in output layer")
         exit()
-    network = network_module.Network(num_inputs, network_layout, [training.LogisticActivationFunction()]*len(network_layout))
+    network = pine.network.Network(num_inputs, network_layout, [pine.training.LogisticActivationFunction()]*len(network_layout))
 
 print('Number of inputs: {0}'.format(len(network.layers[0].neurons[0].weights)))
 for i in range(len(network.layers)-1):
@@ -74,7 +80,7 @@ if args.only_predict:
               format(example[1], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
-            
+
 elif args.testing:
     # testing
     if args.predictions_file:
@@ -85,17 +91,17 @@ elif args.testing:
               format(example[1], example[0], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
-    error = network.calculate_RMS_error(examples)   
+    error = network.calculate_RMS_error(examples)
     print('Error w/ Testing Data: {0}'.format(error))
-    
+
 else: # train
     # now train on the examples
-    trainer = training.Backpropagation(args.learning_rate, args.momentum)
+    trainer = pine.training.Backpropagation(args.learning_rate, args.momentum)
 #    for i in range(args.passes):
-    training.parallel_train(network, trainer, examples, args.passes, 
-                            args.unsupervised, args.num_processes)    
+    pine.training.parallel_train(network, trainer, examples, args.passes,
+                            args.unsupervised, args.num_processes)
     # and print error
-    error = network.calculate_RMS_error(examples)   
+    error = network.calculate_RMS_error(examples)
     print('Error w/ Training Data: {0}'.format(error))
     if args.model_output:
         # save the network
@@ -110,6 +116,3 @@ else: # train
         for example in examples:
             hypothesis_vector = network.compute_network_output(example[1])
             writer.writerow(hypothesis_vector)
-
-
-

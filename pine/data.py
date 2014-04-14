@@ -3,16 +3,19 @@ Created on Jun 6, 2013
 
 @author: dusenberrymw
 '''
-import os.path, csv, random, re
+import csv
+import os.path
+import random
+import re
 
 
 class Data(object):
     """This is the class that will serve as the model of supplied data
     as well as the network and any other useful information
     """
-    
+
     def __init__(self, inputs, target_outputs, training_inputs,
-                 training_target_outputs, testing_inputs, 
+                 training_target_outputs, testing_inputs,
                  testing_target_outputs):
         self.inputs = inputs
         self.target_outputs = target_outputs
@@ -24,15 +27,15 @@ class Data(object):
 
 def parse_data(data_file, only_predict=False):
     """Given a data file, will return a list of training examples
-    
+
     Expects examples file to be of format:
         "[target1[,target2[,...]]] | input1[,input2[,...]]"
-    
+
     """
-    # make a regex that looks for the above pattern, and captures the 
-    #    targets list (separated with commas) and inputs list (separated 
+    # make a regex that looks for the above pattern, and captures the
+    #    targets list (separated with commas) and inputs list (separated
     #    with commas).
-    # Note: The '?:' part causes the group (which is defined within the 
+    # Note: The '?:' part causes the group (which is defined within the
     #    parentheses) to NOT be backreferenced, or in other words, a match
     #    to the regex will not save this group.  We use this so that we can
     #    apply '*' or '?' to a certain group, but in the end we only want the
@@ -56,9 +59,9 @@ def parse_data(data_file, only_predict=False):
             print("Input must be numerical and in format: [target1[,target2[,...]]] | input1[,input2[,...]]")
             exit()
     return examples
-    
-    
-    
+
+
+
 #     data = []
 #     for row in data_file:
 #         # split in target(s), input(s)
@@ -86,8 +89,8 @@ def ct_data():
     # Set up the inputs and target outputs
     inputs = []
     target_outputs = []
-    with open(os.path.join(os.path.dirname(__file__), 
-                           './data/CT_Data_Edited.csv'), 
+    with open(os.path.join(os.path.dirname(__file__),
+                           './data/CT_Data_Edited.csv'),
                            newline='') as data_file:
             data_reader = csv.reader(data_file, delimiter=',', quotechar='|')
             data = [row for row in data_reader]
@@ -104,10 +107,10 @@ def ct_data():
     training_target_outputs = target_outputs[::2]
     testing_inputs = inputs[1::2] # take the other items
     testing_target_outputs = target_outputs[1::2]
-    
+
     # Store the data in an object
-    return Data(inputs, target_outputs, training_inputs, 
-                training_target_outputs, testing_inputs, 
+    return Data(inputs, target_outputs, training_inputs,
+                training_target_outputs, testing_inputs,
                 testing_target_outputs)
 
 
@@ -116,13 +119,13 @@ def iris_data():
     iris test project
     """
     # Fetch the data from the file
-    with open(os.path.join(os.path.dirname(__file__), 
-                           './data/iris.data.txt'), 
+    with open(os.path.join(os.path.dirname(__file__),
+                           './data/iris.data.txt'),
                            newline='') as data_file:
             data_reader = csv.reader(data_file, delimiter=',', quotechar='|')
             data = [row for row in data_reader]
             data_file.close()
-    
+
     # Pull the inputs and target outputs out of the data
     random.shuffle(data)
     examples = []
@@ -138,14 +141,14 @@ def iris_data():
         elif output == 'Iris-virginica':
             target_vector = [0,0,1]
         examples.append([target_vector, input_vector])
-    
+
     # take 2/3 of items to train for better learning
     training_examples = examples[::3] + examples[1::3]
     testing_examples = examples[2::3]
-    
+
     # Store the data in an object
-#     return Data(inputs, target_outputs, training_inputs, 
-#                 training_target_outputs, testing_inputs, 
+#     return Data(inputs, target_outputs, training_inputs,
+#                 training_target_outputs, testing_inputs,
 #                 testing_target_outputs)
     return training_examples, testing_examples
 
@@ -155,13 +158,13 @@ def letter_recognition_data():
     letter recognition test project
     """
     # Fetch the data from the file
-    with open(os.path.join(os.path.dirname(__file__), 
-                           './data/letter_recognition.data.txt'), 
+    with open(os.path.join(os.path.dirname(__file__),
+                           './data/letter_recognition.data.txt'),
                            newline='') as data_file:
             data_reader = csv.reader(data_file, delimiter=',', quotechar='|')
             data = [row for row in data_reader]
             data_file.close()
-    
+
     # Pull the inputs and target outputs out of the data
     random.shuffle(data)
     examples = []
@@ -173,7 +176,7 @@ def letter_recognition_data():
         target_vector = [0] * 26 # 26 letters
         target_vector[number-1] = 1 # set to 1
         examples.append([target_vector, input_vector])
-    
+
 #     # train on first 16000
 #     training_inputs = inputs[:16000]
 #     training_target_outputs = target_outputs[:16000]
@@ -183,10 +186,10 @@ def letter_recognition_data():
     # train on first 500
     training_examples = examples[:16000]
     testing_examples = examples[16000:18000]
-    
+
 #     # Store the data in an object
-#     return Data(None, None, training_inputs, 
-#                 training_target_outputs, testing_inputs, 
+#     return Data(None, None, training_inputs,
+#                 training_target_outputs, testing_inputs,
 #                 testing_target_outputs)
     return training_examples, testing_examples
 
@@ -206,13 +209,13 @@ def xor_data():
 #     training_target_outputs = target_outputs
 #     testing_inputs = training_inputs
 #     testing_target_outputs = training_target_outputs
-    
+
 #     # Store the data in an object
-#     return Data(inputs, target_outputs, training_inputs, 
-#                 training_target_outputs, testing_inputs, 
+#     return Data(inputs, target_outputs, training_inputs,
+#                 training_target_outputs, testing_inputs,
 #                 testing_target_outputs)
     return data, data
-    
+
 
 def and_data():
     """Return a data object containing the training and testing data for the
@@ -229,11 +232,8 @@ def and_data():
     training_target_outputs = target_outputs
     testing_inputs = training_inputs
     testing_target_outputs = training_target_outputs
-    
+
     # Store the data in an object
-    return Data(inputs, target_outputs, training_inputs, 
-                training_target_outputs, testing_inputs, 
+    return Data(inputs, target_outputs, training_inputs,
+                training_target_outputs, testing_inputs,
                 testing_target_outputs)
-
-
-
