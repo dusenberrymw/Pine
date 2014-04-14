@@ -1,5 +1,5 @@
-Pine: Python Neural Network
+Pine: Python Neural Networks
 ============
-["Python Neural Network" -> "PyNN" -> "Pine"]
+["Python Neural Networks" -> "PyNN" -> "Pine"]
 
--A simple ANN library written entirely in basic python
+-A simple ANN library written entirely in vanilla python3

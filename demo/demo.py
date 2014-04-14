@@ -4,21 +4,24 @@ Created on Jun 6, 2013
 @author: dusenberrymw
 '''
 from multiprocessing import cpu_count
+import os.path
+import random
+import sys
 import time
-import sys,os.path
+
+sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
+import demo_data
 from pine.network import Network
 from pine import network as network_module
 from pine import training
-from pine import data as data_module
 
 # constants for the different projects
 AND_PROJECT = 0
 XOR_PROJECT = 1
 IRIS_PROJECT = 2
-CT_PROJECT = 3
-LETTER_RECOG_PROJECT = 4
+LETTER_RECOG_PROJECT = 3
 
 def main(project):
     """Starting point for this program
@@ -56,7 +59,6 @@ def main(project):
     # train the network
     trainer = training.Backpropagation(params['learning_rate'],
                                        params['momentum_coef'])
-#     trainer = training.ResilientPropagation()
 
     i = 0
 #     error = network.calculate_RMS_error(params['data'].training_inputs,
@@ -69,15 +71,15 @@ def main(project):
         # check the new error on the master network
         print("\nMaster Network:")
         error = network.calculate_RMS_error(testing_data)
-        print('Error w/ Test Data: {0}'.format(error))
+        print('RMS Error w/ Test Data: {0}'.format(error))
 #         network_module.print_network_error(network, training_data, testing_data)
 #         error = network.calculate_RMS_error(params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
         print("Iteration number: {0}".format((i+1)*params['iterations']))
         i +=1
 #         print('{0}\t{1}'.format(params['learning_rate'], params['momentum_coef']))
-#
-#         # change the learning rate and momentum coef
+
+        # change the learning rate and momentum coef
         params['learning_rate'] += params['learning_rate']*params['learning_rate_change']
 #         params['momentum_coef'] += params['momentum_coef']*params['momentum_coef_change']
         trainer.learning_rate = params['learning_rate']
@@ -108,23 +110,22 @@ def build_project_params(project):
 
     # Get the project's data and any overrides to the defaults
     if project == AND_PROJECT:
-        params['data'] = data_module.and_data()
+        params['training_data'], params['testing_data'] =  demo_data.and_data()
         params['activation_functions'] = [training.LogisticActivationFunction()]
         params['num_neurons_list'] = [1] # just single layer perceptron
         params['learning_rate'] = 0.2
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == XOR_PROJECT:
-        params['training_data'], params['testing_data'] = data_module.xor_data()
-#         params['activation_functions'] = [training.TanhActivationFunction(), training.LogisticActivationFunction()]
+        params['training_data'], params['testing_data'] = demo_data.xor_data()
         params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [5,1]
-        params['learning_rate'] = 0.2 # 0.9
+        params['learning_rate'] = 0.1 # 0.1
         params['momentum_coef'] = 0.0
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == IRIS_PROJECT:
-        params['training_data'], params['testing_data'] = data_module.iris_data()
+        params['training_data'], params['testing_data'] = demo_data.iris_data()
         params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [10, 3]
         params['learning_rate'] = 0.02 #0.007
@@ -134,7 +135,7 @@ def build_project_params(project):
         params['iterations'] = 1
 #         params['num_processes'] = 1
     elif project == LETTER_RECOG_PROJECT:
-        params['training_data'], params['testing_data'] = data_module.letter_recognition_data()
+        params['training_data'], params['testing_data'] = demo_data.letter_recognition_data()
         params['activation_functions'] = [training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [80, 26]
         params['learning_rate'] = 0.2 #0.2
@@ -142,16 +143,6 @@ def build_project_params(project):
         params['learning_rate_change'] = 0.0 #0.2
         params['momentum_coef_change'] = 0.0 #0.2
         params['iterations'] = 1
-    elif project == CT_PROJECT:
-        params['data'] = data_module.ct_data()
-        params['num_neurons_list'] = [20,1]
-        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
-        params['learning_rate'] = 0.001
-        params['momentum_coef'] = 0.5
-        params['learning_rate_change'] = 0.0 #0.0
-        params['momentum_coef_change'] = 0.0 #0.0
-        params['iterations'] = 2
-#         params['num_processes'] = 1
 
     return params
 
@@ -191,11 +182,11 @@ if __name__ == '__main__':
     # this will be used for timing the code
     start_time = time.clock()
 
-    # 0 = AND
-    # 1 = XOR
-    # 2 = Iris
-    # 3 = CT
-    # 4 = letter recognition
+    # Choose a project to run
+    # 0 = AND_PROJECT
+    # 1 = XOR_PROJECT
+    # 2 = Iris_PROJECT
+    # 3 = LETTER_RECOG_PROJECT
     project = XOR_PROJECT
 
     if project == AND_PROJECT:
@@ -204,8 +195,6 @@ if __name__ == '__main__':
         print("Running XOR test project\n")
     elif project == IRIS_PROJECT:
         print("Running Iris test project\n")
-    elif project == CT_PROJECT:
-        print("Running CT clinical project\n")
     elif project == LETTER_RECOG_PROJECT:
         print("Running Letter Recognition test project\n")
 

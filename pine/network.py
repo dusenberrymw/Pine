@@ -70,7 +70,7 @@ class Network(object):
             input_vector = output_vector
         return output_vector  # this will be the vector of output layer activations
 
-    def calculate_RMS_error(self, examples, classification=False):
+    def calculate_RMS_error(self, examples):
         """Determine the root mean square (RMS) error for the given dataset
         (multiple rows) of input data against the associated target outputs
 
@@ -81,6 +81,8 @@ class Network(object):
         opposite errors from canceling out.
 
         error = sqrt( (sum(residual^2)) / num_values )
+
+        examples are in the format: [[target_vector], [input_vector]]
 
         """
         error = 0.0
@@ -96,7 +98,7 @@ class Network(object):
         # average the error and take the square root
         return math.sqrt(error/num_values)
 
-    def cost_J(self, input_vector, target_output_vector):
+    def cost_J(self, example):
         """Determine the overall cost J(theta) for the network
 
         The overal cost, J(theta), is the overall "error" of the network
@@ -104,7 +106,11 @@ class Network(object):
             sum of the cost functions for each node in the output layer,
             evaluated at the given training example
 
+        examples are in the format: [[target_vector], [input_vector]]
+
         """
+        target_output_vector = example[0]
+        input_vector = example[1]
         output_layer = self.layers[-1]
         cost_func = output_layer.activation_function.cost
         hypothesis_vector = self.compute_network_output(input_vector)

@@ -5,6 +5,7 @@ Created on Jun 6, 2013
 '''
 import math
 from multiprocessing import Process, Queue, cpu_count
+import random
 
 
 class Backpropagation(object):
@@ -66,6 +67,7 @@ class Backpropagation(object):
             rho_estimates = [0] * len(network.layers[0].neurons) # set to 0 for each node
             beta = 0.2 # the learning rate for updating the threshold terms
         for iteration_counter in range(iterations):
+            random.shuffle(training_examples)
             # for each row of data
             for training_example in training_examples:
                 target_output_vector = training_example[0]

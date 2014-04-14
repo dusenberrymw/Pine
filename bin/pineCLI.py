@@ -5,15 +5,15 @@ Created on Jul 22, 2013
 @author: dusenberrymw
 '''
 import argparse
-import pickle
 import csv
-import sys
 import os.path
+import pickle
+import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
+import pine.data
 import pine.network
 import pine.training
-import pine.data
 
 parser = argparse.ArgumentParser(description='Pine: Python Neural Network')
 parser.add_argument('examples_file', type=argparse.FileType('r'),
@@ -63,6 +63,7 @@ else:
         exit()
     network = pine.network.Network(num_inputs, network_layout, [pine.training.LogisticActivationFunction()]*len(network_layout))
 
+# print network structure
 print('Number of inputs: {0}'.format(len(network.layers[0].neurons[0].weights)))
 for i in range(len(network.layers)-1):
     print('Number of hidden neurons: {0}'.format(len(network.layers[i].neurons)))
