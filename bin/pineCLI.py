@@ -39,6 +39,7 @@ parser.add_argument('-u', '--unsupervised', action='store_true', default=False)
 parser.add_argument('-pf', '--predictions_file', default=None, type=argparse.FileType('w'))
 parser.add_argument('-np', '--num_processes', type=int, default=None,
                     help='add to limit program to a certain number of processes')
+parser.add_argument('-v', '--verbose', action='store_true', default=False)
 
 # get args from command line
 args = parser.parse_args()
@@ -88,8 +89,9 @@ elif args.testing:
         writer = csv.writer(args.predictions_file)
     for example in examples:
         hypothesis_vector = network.compute_network_output(example[1])
-        print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
-              format(example[1], example[0], hypothesis_vector))
+        if args.verbose:
+            print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
+                  format(example[1], example[0], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
     error = network.calculate_RMS_error(examples)
