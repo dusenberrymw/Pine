@@ -65,11 +65,12 @@ else:
     network = pine.network.Network(num_inputs, network_layout, [pine.training.LogisticActivationFunction()]*len(network_layout))
 
 # print network structure
-print('Number of inputs: {0}'.format(len(network.layers[0].neurons[0].weights)))
-for i in range(len(network.layers)-1):
-    print('Number of hidden neurons: {0}'.format(len(network.layers[i].neurons)))
-print('Number of output neurons: {0}'.format(len(network.layers[-1].neurons)))
-print('Number of total layers: {0}'.format(len(network.layers)+1))
+if args.verbose:
+    print('Number of inputs: {0}'.format(len(network.layers[0].neurons[0].weights)))
+    for i in range(len(network.layers)-1):
+        print('Number of hidden neurons: {0}'.format(len(network.layers[i].neurons)))
+    print('Number of output neurons: {0}'.format(len(network.layers[-1].neurons)))
+    print('Number of total layers: {0}'.format(len(network.layers)+1))
 
 # now determine what needs to be done
 if args.only_predict:
@@ -78,8 +79,9 @@ if args.only_predict:
         writer = csv.writer(args.predictions_file)
     for example in examples:
         hypothesis_vector = network.compute_network_output(example[1])
-        print('Input: {0}, Predicted Output: {1}'.
-              format(example[1], hypothesis_vector))
+        if args.verbose:
+            print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
+                format(example[1], example[0], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
 
