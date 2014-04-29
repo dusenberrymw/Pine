@@ -1,3 +1,4 @@
+#! /usr/bin/env python3
 '''
 Created on Jun 6, 2013
 
@@ -13,9 +14,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '.'))
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import demo_data
-from pine.network import Network
-from pine import network as network_module
-from pine import training
+import pine.network
+import pine.training
 
 # constants for the different projects
 AND_PROJECT = 0
@@ -39,7 +39,7 @@ def main(project):
     num_processes = params['num_processes']
 
     # create the network
-    network = Network(len(params['training_data'][0][1]),
+    network = pine.network.Network(len(params['training_data'][0][1]),
                       params['num_neurons_list'],
                       params['activation_functions'])
     # Test the network
@@ -54,17 +54,17 @@ def main(project):
 
     # test the network
     print("\nBefore training")
-    network_module.print_network_error(network, training_data, testing_data)
+    pine.network.print_network_error(network, training_data, testing_data)
 
     # train the network
-    trainer = training.Backpropagation(params['learning_rate'],
+    trainer = pine.training.Backpropagation(params['learning_rate'],
                                        params['momentum_coef'])
 
     i = 0
 #     error = network.calculate_RMS_error(params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
     while ((i*params['iterations'])<2000):#& (error > params['min_error']):
-        training.parallel_train(network, trainer, training_data, iterations,
+        pine.training.parallel_train(network, trainer, training_data, iterations,
                                 num_processes)
 #         trainer.train(network, data.training_inputs, data.training_target_outputs, iterations)
 
@@ -72,7 +72,7 @@ def main(project):
         print("\nMaster Network:")
         error = network.calculate_RMS_error(testing_data)
         print('RMS Error w/ Test Data: {0}'.format(error))
-#         network_module.print_network_error(network, training_data, testing_data)
+#         pine.network.print_network_error(network, training_data, testing_data)
 #         error = network.calculate_RMS_error(params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
         print("Iteration number: {0}".format((i+1)*params['iterations']))
@@ -86,9 +86,9 @@ def main(project):
 #         trainer.momentum_coef = params['momentum_coef']
 
     print("\nAfter Training\n")
-    network_module.print_network_outputs(network, testing_data)
+    pine.network.print_network_outputs(network, testing_data)
     print()
-    network_module.print_network_error(network, training_data, testing_data)
+    pine.network.print_network_error(network, training_data, testing_data)
     print('Iterations: {0}'.format(i*params['iterations']))
 
 
@@ -98,7 +98,7 @@ def build_project_params(project):
     params = {}
 
     # Set up default parameters
-    params['activation_functions'] = [training.TanhActivationFunction()] * 2
+    params['activation_functions'] = [pine.training.TanhActivationFunction()] * 2
     params['num_neurons_list'] = [None, 1]
     params['min_error'] = 0.01
     params['iterations'] = 1000
@@ -111,14 +111,14 @@ def build_project_params(project):
     # Get the project's data and any overrides to the defaults
     if project == AND_PROJECT:
         params['training_data'], params['testing_data'] =  demo_data.and_data()
-        params['activation_functions'] = [training.LogisticActivationFunction()]
+        params['activation_functions'] = [pine.training.LogisticActivationFunction()]
         params['num_neurons_list'] = [1] # just single layer perceptron
         params['learning_rate'] = 0.2
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == XOR_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.xor_data()
-        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
+        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [5,1]
         params['learning_rate'] = 0.1 # 0.1
         params['momentum_coef'] = 0.0
@@ -126,7 +126,7 @@ def build_project_params(project):
         params['num_processes'] = 1
     elif project == IRIS_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.iris_data()
-        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
+        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [10, 3]
         params['learning_rate'] = 0.02 #0.007
         params['momentum_coef'] = 0.0 #0.4
@@ -136,7 +136,7 @@ def build_project_params(project):
 #         params['num_processes'] = 1
     elif project == LETTER_RECOG_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.letter_recognition_data()
-        params['activation_functions'] = [training.LogisticActivationFunction()] * 2
+        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
         params['num_neurons_list'] = [80, 26]
         params['learning_rate'] = 0.2 #0.2
         params['momentum_coef'] = 0.0
@@ -161,11 +161,11 @@ def test_run(network, params):
 
     # test the network
     print("\nBefore training")
-    network_module.print_network_error(network, params['data'])
+    pine.network.print_network_error(network, params['data'])
 
     # Train the network
     print('\nWill train for {0} iterations'.format(params['iterations']))
-    trainer = training.Backpropagation()
+    trainer = pine.training.Backpropagation()
     trainer.train(network, params['data'].training_inputs,
                   params['data'].training_target_outputs,
                   params['learning_rate'], params['momentum_coef'],
@@ -173,8 +173,8 @@ def test_run(network, params):
 
     # test the network
     print("\nAfter training")
-#     network_module.print_network_outputs(network, params['data'])
-    network_module.print_network_error(network, params['data'])
+#     pine.network.print_network_outputs(network, params['data'])
+    pine.network.print_network_error(network, params['data'])
     print('Trained for {0} iterations'.format(trainer.iterations))
 
 
