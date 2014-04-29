@@ -26,5 +26,5 @@ Use './demo/demo.py' for a quick, old demo.  Also, the bottom of demo.py
 can be edited to run other sample demo projects.
 
 ## Workflow
-Checkout the 'Pine Data Tools' repo for a sample workflow for running real
-projects.  Be sure to install the shell command first, as seen above.
+Checkout the 'Pine Data Tools' repo (https://github.com/dusenberrymw/Pine-Data-Tools)
+for a sample workflow for running real projects.  Be sure to install the shell command first, as seen above.
