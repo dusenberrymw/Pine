@@ -15,10 +15,14 @@ See pine/ folder
 ## Command line script
 Use './bin/pineCLI.py' (add '-h' for help)
 
+#### Install Shell Command
+To access pineCLI.py globally, run './installShellCommand.py'.  This will
+install 'pine' to /usr/local/bin/ as a soft link.
+
 ## Demo
 Use './demo/demo.py' for a quick, old demo.  Also, the bottom of demo.py
 can be edited to run other sample demo projects.
 
 ## Workflow
 Checkout the 'Pine Data Tools' repo for a sample workflow for running real
-projects.
+projects.  Be sure to install the shell command first, as seen above.
