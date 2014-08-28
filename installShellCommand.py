@@ -8,7 +8,7 @@ import os
 import subprocess
 
 pineCLI_path = os.path.realpath("./bin/pineCLI.py")
-install_path = "/usr/local/bin/pine2"
+install_path = "/usr/local/bin/pine"
 
 cmd = ["ln", "-s", pineCLI_path, install_path]
 
