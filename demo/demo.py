@@ -16,6 +16,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import demo_data
 import pine.network
 import pine.training
+import pine.util
 
 # constants for the different projects
 AND_PROJECT = 0
@@ -54,14 +55,14 @@ def main(project):
 
     # test the network
     print("\nBefore training")
-    pine.network.print_network_error(network, training_data, testing_data)
+    pine.util.print_network_error(network, training_data, testing_data)
 
     # train the network
     trainer = pine.training.Backpropagation(params['learning_rate'],
                                        params['momentum_coef'])
 
     i = 0
-#     error = network.calculate_RMS_error(params['data'].training_inputs,
+#     error = pine.util.calculate_RMS_error(network, params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
     while ((i*params['iterations'])<2000):#& (error > params['min_error']):
         pine.training.parallel_train(network, trainer, training_data, iterations,
@@ -70,10 +71,10 @@ def main(project):
 
         # check the new error on the master network
         print("\nMaster Network:")
-        error = network.calculate_RMS_error(testing_data)
+        error = pine.util.calculate_RMS_error(network, testing_data)
         print('RMS Error w/ Test Data: {0}'.format(error))
-#         pine.network.print_network_error(network, training_data, testing_data)
-#         error = network.calculate_RMS_error(params['data'].training_inputs,
+#         pine.util.print_network_error(network, training_data, testing_data)
+#         error = pine.util.calculate_RMS_error(network, params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
         print("Iteration number: {0}".format((i+1)*params['iterations']))
         i +=1
@@ -86,9 +87,9 @@ def main(project):
 #         trainer.momentum_coef = params['momentum_coef']
 
     print("\nAfter Training\n")
-    pine.network.print_network_outputs(network, testing_data)
+    pine.util.print_network_outputs(network, testing_data)
     print()
-    pine.network.print_network_error(network, training_data, testing_data)
+    pine.util.print_network_error(network, training_data, testing_data)
     print('Iterations: {0}'.format(i*params['iterations']))
 
 
@@ -161,7 +162,7 @@ def test_run(network, params):
 
     # test the network
     print("\nBefore training")
-    pine.network.print_network_error(network, params['data'])
+    pine.util.print_network_error(network, params['data'])
 
     # Train the network
     print('\nWill train for {0} iterations'.format(params['iterations']))
@@ -173,8 +174,8 @@ def test_run(network, params):
 
     # test the network
     print("\nAfter training")
-#     pine.network.print_network_outputs(network, params['data'])
-    pine.network.print_network_error(network, params['data'])
+#     pine.util.print_network_outputs(network, params['data'])
+    pine.util.print_network_error(network, params['data'])
     print('Trained for {0} iterations'.format(trainer.iterations))
 
 
