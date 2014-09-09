@@ -14,6 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 import pine.data
 import pine.network
 import pine.training
+import pine.util
 
 parser = argparse.ArgumentParser(description='Pine: Python Neural Network')
 parser.add_argument('examples_file', type=argparse.FileType('r'),
@@ -96,7 +97,7 @@ elif args.testing:
                   format(example[1], example[0], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
-    error = network.calculate_RMS_error(examples)
+    error = pine.util.calculate_RMS_error(network, examples)
     print('Error w/ Testing Data: {0}'.format(error))
 
 else: # train
@@ -106,7 +107,7 @@ else: # train
     pine.training.parallel_train(network, trainer, examples, args.passes,
                             args.unsupervised, args.num_processes)
     # and print error
-    error = network.calculate_RMS_error(examples)
+    error = pine.util.calculate_RMS_error(network, examples)
     print('Error w/ Training Data: {0}'.format(error))
     if args.model_output:
         # save the network
