@@ -40,9 +40,10 @@ def main(project):
     num_processes = params['num_processes']
 
     # create the network
-    network = pine.network.Network(len(params['training_data'][0][1]),
-                      params['num_neurons_list'],
-                      params['activation_functions'])
+    network = pine.util.create_network(params['num_neurons_list'], params['activation_functions'])
+    # network = pine.network.Network(len(params['training_data'][0][1]),
+    #                   params['num_neurons_list'],
+    #                   params['activation_functions'])
     # Test the network
 #     network2 = copy.deepcopy(network)
 #     test_run(network2, params)
@@ -99,8 +100,6 @@ def build_project_params(project):
     params = {}
 
     # Set up default parameters
-    params['activation_functions'] = [pine.training.TanhActivationFunction()] * 2
-    params['num_neurons_list'] = [None, 1]
     params['min_error'] = 0.01
     params['iterations'] = 1000
     params['num_processes'] = None
@@ -112,22 +111,22 @@ def build_project_params(project):
     # Get the project's data and any overrides to the defaults
     if project == AND_PROJECT:
         params['training_data'], params['testing_data'] =  demo_data.and_data()
-        params['activation_functions'] = [pine.training.LogisticActivationFunction()]
-        params['num_neurons_list'] = [1] # just single layer perceptron
+        params['activation_functions'] = ['logistic']
+        params['num_neurons_list'] = [len(params['training_data'][0][1]), 1] # just single layer perceptron
         params['learning_rate'] = 0.2
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == XOR_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.xor_data()
-        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
-        params['num_neurons_list'] = [5,1]
+        params['activation_functions'] = ['logistic'] * 2
+        params['num_neurons_list'] = [2,5,1]
         params['learning_rate'] = 0.1 # 0.1
         params['momentum_coef'] = 0.0
         params['iterations'] = 1
         params['num_processes'] = 1
     elif project == IRIS_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.iris_data()
-        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
+        params['activation_functions'] = ['logistic'] * 2
         params['num_neurons_list'] = [10, 3]
         params['learning_rate'] = 0.02 #0.007
         params['momentum_coef'] = 0.0 #0.4
@@ -137,7 +136,7 @@ def build_project_params(project):
 #         params['num_processes'] = 1
     elif project == LETTER_RECOG_PROJECT:
         params['training_data'], params['testing_data'] = demo_data.letter_recognition_data()
-        params['activation_functions'] = [pine.training.LogisticActivationFunction()] * 2
+        params['activation_functions'] = ['logistic'] * 2
         params['num_neurons_list'] = [80, 26]
         params['learning_rate'] = 0.2 #0.2
         params['momentum_coef'] = 0.0

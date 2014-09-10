@@ -29,6 +29,8 @@ parser.add_argument('network_layout', help='number of nodes in each layer \
                                             is a network with 4 inputs, \
                                             10 nodes in a hidden layer, and 1 \
                                             output node.')
+parser.add_argument('-af','--activation_functions', help='activation function names for \
+                                                 hidden and output nodes')
 parser.add_argument('-l', '--learning_rate', type=float, default=0.05)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
@@ -58,16 +60,24 @@ else:
     try:
         network_layout = [int(num_nodes) for num_nodes in
                           args.network_layout.split(",")]
-        num_inputs = network_layout[0]
-        network_layout = network_layout[1:]
     except ValueError:
         print("\nError: Network layout must be in format: #[,#[,...]],# beginning with input layer, and ending in output layer")
         exit()
-    network = pine.network.Network(num_inputs, network_layout, [pine.training.LogisticActivationFunction()]*len(network_layout))
+    try:
+        act_funcs = [f.lower() for f in args.activation_functions.split(",")]
+        for f in act_funcs:
+            if f not in ['logistic', 'tanh', 'linear']:
+                print("\nError: activation functions must be one of the following: 'logistic', 'tanh', 'linear'")
+                exit()
+    except:# ValueError:
+        print("\nError: Activation functions must be in format: name[,name[,...]],name beginning with hidden layer 1, and ending in output layer")
+        # exit()
+        act_funcs = ['logistic']*(len(network_layout)-1)
+    network = pine.util.create_network(network_layout, act_funcs)
 
 # print network structure
 if args.verbose:
-    print('Number of inputs: {0}'.format(len(network.layers[0].neurons[0].weights)))
+    print('Number of input neurons: {0}'.format(len(network.layers[0].neurons[0].weights)))
     for i in range(len(network.layers)-1):
         print('Number of hidden neurons: {0}'.format(len(network.layers[i].neurons)))
     print('Number of output neurons: {0}'.format(len(network.layers[-1].neurons)))
@@ -79,7 +89,7 @@ if args.only_predict:
     if args.predictions_file:
         writer = csv.writer(args.predictions_file)
     for example in examples:
-        hypothesis_vector = network.compute_network_output(example[1])
+        hypothesis_vector = network.forward(example[1])
         if args.verbose:
             print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
                 format(example[1], example[0], hypothesis_vector))
@@ -91,14 +101,14 @@ elif args.testing:
     if args.predictions_file:
         writer = csv.writer(args.predictions_file)
     for example in examples:
-        hypothesis_vector = network.compute_network_output(example[1])
+        hypothesis_vector = network.forward(example[1])
         if args.verbose:
             print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
                   format(example[1], example[0], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
     error = pine.util.calculate_RMS_error(network, examples)
-    print('Error w/ Testing Data: {0}'.format(error))
+    print('RMS Error w/ Testing Data: {0}'.format(error))
 
 else: # train
     # now train on the examples
@@ -108,7 +118,7 @@ else: # train
                             args.unsupervised, args.num_processes)
     # and print error
     error = pine.util.calculate_RMS_error(network, examples)
-    print('Error w/ Training Data: {0}'.format(error))
+    print('RMS Error w/ Training Data: {0}'.format(error))
     if args.model_output:
         # save the network
         pickle.dump(network, args.model_output)
@@ -120,5 +130,5 @@ else: # train
         # write the predictions
         writer = csv.writer(args.predictions_file)
         for example in examples:
-            hypothesis_vector = network.compute_network_output(example[1])
+            hypothesis_vector = network.forward(example[1])
             writer.writerow(hypothesis_vector)

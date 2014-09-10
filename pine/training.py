@@ -73,9 +73,9 @@ class Backpropagation(object):
                 target_output_vector = training_example[0]
                 input_vector = training_example[1]
                 # prime the network on this row of input data
-                #    -this will cause local_output (activation) values to be
+                #    -this will cause output (activation) values to be
                 #     set for each neuron
-                network.compute_network_output(input_vector)
+                network.forward(input_vector)
 
                 # Note: next_layer_deltas is a vector of the single
                 #    delta values for each node in the next
@@ -95,9 +95,9 @@ class Backpropagation(object):
                                 # derivative simplifies down to just
                                 #    subtracting the target from the
                                 #    hypothesis
-                                delta = neuron.local_output - target_output_vector[j]
+                                delta = neuron.output - target_output_vector[j]
                             else: # Tanh or Linear
-                                delta = (neuron.local_output-target_output_vector[j])*derivative(neuron.local_output)
+                                delta = (neuron.output-target_output_vector[j])*derivative(neuron.output)
                         else: # for the hidden layer neurons
                             # Need to sum the products of the delta of
                             #    a neuron in the next (forward) layer and the
@@ -113,7 +113,7 @@ class Backpropagation(object):
                             for next_delta, weights in zip(next_layer_deltas,
                                                          next_layer_weights):
                                 sum_value +=  weights[j] * next_delta
-                            delta = (derivative(neuron.local_output) *
+                            delta = (derivative(neuron.output) *
                                               sum_value)
                         # now store the delta and the list of weights
                         #    for this neuron into these storage lists for the
@@ -124,7 +124,7 @@ class Backpropagation(object):
                         #    func, J, w/ respect to parameter ij) for each
                         #    weight_ij (parameter_ij) associated with
                         #    this neuron
-                        for ij, input_ij in enumerate(neuron.inputs):
+                        for ij, input_ij in enumerate(neuron.input_vector):
                             # compute gradient (partial deriv of cost J w/
                             #    respect to parameter ij)
                             # Note: index ij means from a previous
@@ -149,7 +149,7 @@ class Backpropagation(object):
                         neuron.threshold -= self.learning_rate * gradient_0j
                         if unsupervised and not isOutputLayer:
                             rho_estimates[j] = (0.999*rho_estimates[j] +
-                                                0.001*neuron.local_output)
+                                                0.001*neuron.output)
                             neuron.threshold -= (self.learning_rate * beta *
                                                  (rho_estimates[j] - rho))
                     # Once this layer is done, store the gradients and weights
