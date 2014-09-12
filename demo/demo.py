@@ -41,9 +41,7 @@ def main(project):
 
     # create the network
     network = pine.util.create_network(params['num_neurons_list'], params['activation_functions'])
-    # network = pine.network.Network(len(params['training_data'][0][1]),
-    #                   params['num_neurons_list'],
-    #                   params['activation_functions'])
+    
     # Test the network
 #     network2 = copy.deepcopy(network)
 #     test_run(network2, params)

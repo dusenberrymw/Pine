@@ -84,14 +84,14 @@ class Backpropagation(object):
                 next_layer_weights = []
                 isOutputLayer = True
                 for layer in reversed(network.layers): # iterate backwards
-                    derivative = layer.activation_function.derivative
                     this_layer_deltas = [] # values from current layer
                     this_layer_weights = []
                     for j, neuron in enumerate(layer.neurons):
+                        derivative = neuron.activation_function.derivative
                         # The output layer neurons are treated slightly
                         #    different than the hidden neurons
                         if isOutputLayer:
-                            if layer.activation_function.name == "Logistic":
+                            if neuron.activation_function.name == "logistic":
                                 # derivative simplifies down to just
                                 #    subtracting the target from the
                                 #    hypothesis
@@ -129,11 +129,11 @@ class Backpropagation(object):
                             #    respect to parameter ij)
                             # Note: index ij means from a previous
                             #    layer node i to this layer node j
+                            # Then Gradient Descent: multiply by the learning
+                            #    rate, and subtract from the current value
                             # Note: Subtract in order to minimize error, since
                             #    partial derivs point in direction of gradient
                             #    AScent
-                            # Then Gradient Descent: multiply by the learning
-                            #    rate, and subtract from the current value
                             gradient_ij = delta * input_ij
                             neuron.weights[ij] -= self.learning_rate * gradient_ij
                         # Now, compute the gradient (partial deriv of cost
@@ -168,7 +168,7 @@ class LogisticActivationFunction(object):
 
     """
     def __init__(self):
-        self.name = "Logistic"
+        self.name = "logistic"
 
     def activate(self, input_value):
         """Run the input value through the sigmoid function
@@ -184,14 +184,14 @@ class LogisticActivationFunction(object):
                 return 0.9999999999999
 
     def derivative(self, fx):
-        """Some training will require the derivative of the Logistic function
+        """Calculate derivative of logistic function, given an output F(x)
 
         Given F is the logistic (sigmoid) function, the derivative
             F'(x) = F(x) * (1 - F(x))
 
-        F(x) will be passed in
+        F(x) will be passed in for efficiency
         """
-        return fx*(1.0-fx) # can add 0.1 to fix flat spot
+        return fx*(1.0-fx)
 
     def inverse(self, input_value):
         """This will produce the inverse of the sigmoid function, which is
@@ -200,16 +200,16 @@ class LogisticActivationFunction(object):
         return math.log(input_value/(1-input_value))
 
     def cost(self, hypothesis_output, target_output):
-        """Cost function of a node using the Logistic activation function
+        """Cost function, J, of a node using the logistic activation function
 
-        cost_theta(h_theta(x), y) = -log(h_theta(x))   if y = 1
-                                    -log(1-h_theta(x)) if y = 0
-                where h_theta(x) is the hypothesis (computed output) of the
-                    node evaluated with respect to theta (parameter/weight)
-                    evaluated at input x,
-                and cost_theta is the "error" of the node with respect to
-                    theta (parameter/weight) evaluated at the hypothesis of x
-                    given the target value y
+        J_theta(h_theta(x), y) = -log(h_theta(x))   if y = 1
+                                 -log(1-h_theta(x)) if y = 0
+            where h_theta(x) is the hypothesis (computed output) of the
+                node evaluated with respect to theta (parameter/weight vector)
+                evaluated at input x,
+            and J_theta is the "error" (cost) of the node with respect to
+                theta (parameter/weight vector) evaluated at the hypothesis of x
+                given the target value y
 
         This cost function essentially allows for no error if the hypothesis
             is equal to the target y, and high error otherwise
@@ -217,7 +217,21 @@ class LogisticActivationFunction(object):
         """
         y = target_output
         h_x = hypothesis_output
-        return -y*math.log(h_x)-(1-y)*math.log(1-h_x)
+        J = -y*math.log10(h_x)-(1-y)*math.log10(1-h_x)
+        return J
+
+    def cost_derivative(self, hypothesis_output, target_output):
+        """Partial derivative of the cost function, J, of a neuron using the
+        logistic activation function
+
+        This will basically determine how much the hypothesis (output of the
+            neuron) contributed to the cost ("error") of the neuron
+
+        """
+        y = target_output
+        h_x = hypothesis_output
+        dJ = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) #math.log is ln
+        return dJ
 
 
 class TanhActivationFunction(object):
@@ -226,17 +240,17 @@ class TanhActivationFunction(object):
 
     """
     def __init__(self):
-        self.name = "Tanh"
+        self.name = "tanh"
 
     def activate(self, input_value):
         """Run the input value through the tanh function"""
-#         return math.tanh(input_value)
+        #return math.tanh(input_value)
         return ((math.exp(input_value)-math.exp(-input_value)) /
                (math.exp(input_value)+math.exp(-input_value)))
 
     def derivative(self, fx):
         """Some training will require the derivative of the tanh function"""
-        return (1.0-fx) * (1.0+fx) # can add 0.1 to fix flat spot
+        return (1.0-fx) * (1.0+fx)
 
     def inverse(self, input_value):
         """This will produce the inverse of the tanh function, which is
@@ -245,14 +259,28 @@ class TanhActivationFunction(object):
         return math.atanh(input_value)
 
     def cost(self, hypothesis_output, target_output):
-        """Cost function of a node using the Tanh activation function
+        """Cost function, J, of a node using the tanh activation function
 
-        cost_theta(h_theta(x), y) = (1/2)*(|h_theta(x)-y|^2)
+        J_theta(h_theta(x), y) = (1/2)*(|h_theta(x)-y|^2)
 
         """
         y = target_output
         h_x = hypothesis_output
-        return (1/2)*(math.fabs(h_x-y)**2)
+        # return (1/2)*(math.fabs(h_x-y)**2)
+        return (1/2)*((h_x-y)**2)
+
+    def cost_derivative(self, hypothesis_output, target_output):
+        """Partial derivative of the cost function, J, of a neuron using the
+        tanh activation function
+
+        This will basically determine how much the hypothesis (output of the
+            neuron) contributed to the cost ("error") of the neuron
+
+        """
+        y = target_output
+        h_x = hypothesis_output
+        dJ = h_x - y
+        return dJ
 
 
 class LinearActivationFunction(object):
@@ -261,7 +289,7 @@ class LinearActivationFunction(object):
 
     """
     def __init__(self):
-        self.name = "Linear"
+        self.name = "linear"
 
     def activate(self, input_value):
         """In the linear function, f(z) = z"""
@@ -288,6 +316,19 @@ class LinearActivationFunction(object):
         y = target_output
         h_x = hypothesis_output
         return (1/2)*((h_x-y)**2)
+
+    def cost_derivative(self, hypothesis_output, target_output):
+        """Partial derivative of the cost function, J, of a neuron using the
+        linear activation function
+
+        This will basically determine how much the hypothesis (output of the
+            neuron) contributed to the cost ("error") of the neuron
+
+        """
+        y = target_output
+        h_x = hypothesis_output
+        dJ = h_x - y
+        return dJ
 
 
 def parallel_train(network, trainer, training_examples, iterations,
