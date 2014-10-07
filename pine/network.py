@@ -15,9 +15,9 @@ class Network(object):
 
     def forward(self, input_vector):
         """
-        Given an input vector, forward propagate it through the network, setting
-            the input_vectors for all neurons, and return the output vector of
-            the network
+        Given an input vector, forward propagate it through the network, 
+            setting the input_vectors for all neurons, and return the output 
+            vector of the network
 
         """
         for layer in self.layers:
@@ -27,9 +27,9 @@ class Network(object):
 
     def backward(self, downstream_gradient_vector):
         """
-        Given a gradient vector, calculate the gradients (error) for all network
-            parameters (weights/thresholds), store in each neuron, and return
-            the gradient vector for the inputs to the network
+        Given a gradient vector, calculate the gradients (error) for all 
+            network parameters (weights/thresholds), store in each neuron, 
+            and return the gradient vector for the inputs to the network
 
         """
         for layer in reversed(self.layers):
@@ -50,8 +50,8 @@ class Network(object):
 
     def cost_gradient(self, target_output_vector):
         """
-        Cost gradient vector (partial derivatives) of the network, which is the
-            cost gradient vector of the output layer, given the last input
+        Cost gradient vector (partial derivatives) of the network, which is 
+            the cost gradient vector of the output layer, given the last input
             vector forward propagated through the network
 
         """
@@ -77,8 +77,8 @@ class Layer(object):
 
     def backward(self, downstream_gradient_vector):
         """
-        Given an error gradient vector from the downstream layer, calculate the
-            gradients (error) for this layer
+        Given an error gradient vector from the downstream layer, calculate 
+            the gradients (error) for this layer
 
         """
         gradient_vectors = [neuron.backward(downstream_gradient)
@@ -94,8 +94,8 @@ class Layer(object):
 
     def cost(self, target_output_vector):
         """
-        Cost ("error") vector of this layer, given the last input vector forward
-            propagated through the layer
+        Cost ("error") vector of this layer, given the last input vector 
+            forward propagated through the layer
 
         """
         cost_vector = [neuron.cost(target_output)
@@ -105,8 +105,8 @@ class Layer(object):
 
     def cost_gradient(self, target_output_vector):
         """
-        Cost gradient vector (partial derivatives) of this layer, given the last
-            input vector forward propagated through the layer
+        Cost gradient vector (partial derivatives) of this layer, given the 
+            last input vector forward propagated through the layer
 
         """
         cost_gradient_vector = [neuron.cost_gradient(target_output)
@@ -120,7 +120,7 @@ class Neuron(object):
 
     def __init__(self, num_inputs, activation_function):
         """Constructor"""
-        self.input_vector = [0]*num_inputs # the inputs coming from previous neurons
+        self.input_vector = [0]*num_inputs # inputs coming from prev neurons
         self.output = 0.0 # the activation of this neuron
         self.activation_function = activation_function
         # need a weight for each input to the neuron
@@ -132,8 +132,8 @@ class Neuron(object):
 
     def forward(self, input_vector):
         """
-        Given an input vector from previous layer neurons, compute the output of
-            the neuron in a forward pass
+        Given an input vector from previous layer neurons, compute the output 
+            of the neuron in a forward pass
 
         """
         # keep track of what inputs were sent to this neuron
@@ -178,6 +178,9 @@ class Neuron(object):
         """
         Cost gradient (partial derivative of cost) of this neuron, given the
             last input vector forward propagated through the neuron
+
+        This will basically determine how much the hypothesis (output of the
+            neuron) contributed to the cost ("error") of the neuron
 
         """
         cost_gradient = self.activation_function.cost_derivative(self.output, target_output)

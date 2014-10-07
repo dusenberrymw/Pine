@@ -106,8 +106,8 @@ class Backpropagation(object):
                             # This will basically determine how much this
                             #    neuron contributed to the error of the neuron
                             #    it is connected to
-                            # Note: next_layer_deltas is a vector of the single
-                            #    delta values for each node in the next
+                            # Note: next_layer_deltas is a vector of the 
+                            #    single delta values for each node in the next
                             #    (forward) layer
                             sum_value = 0.0
                             for next_delta, weights in zip(next_layer_deltas,
@@ -179,7 +179,7 @@ class LogisticActivationFunction(object):
         except OverflowError:
             # bound the numbers if there is an overflow
             if input_value < 0:
-                return 0.0000000000001  #logistic function goes to 0 for small x
+                return 0.0000000000001 #logistic func goes to 0 for small x
             else:
                 return 0.9999999999999
 
@@ -208,8 +208,8 @@ class LogisticActivationFunction(object):
                 node evaluated with respect to theta (parameter/weight vector)
                 evaluated at input x,
             and J_theta is the "error" (cost) of the node with respect to
-                theta (parameter/weight vector) evaluated at the hypothesis of x
-                given the target value y
+                theta (parameter/weight vector) evaluated at the hypothesis 
+                of x given the target value y
 
         This cost function essentially allows for no error if the hypothesis
             is equal to the target y, and high error otherwise
@@ -227,10 +227,12 @@ class LogisticActivationFunction(object):
         This will basically determine how much the hypothesis (output of the
             neuron) contributed to the cost ("error") of the neuron
 
+        Note: math.log is ln
+
         """
         y = target_output
         h_x = hypothesis_output
-        dJ = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) #math.log is ln
+        dJ = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) 
         return dJ
 
 
@@ -384,8 +386,8 @@ def parallel_train(network, trainer, training_examples, iterations,
 
     # retrieve the trained networks as they come in
     #    -Note: this is necessary because the multiprocess Queue is actually
-    #        a pipe, and has a maximum size limit.  Therefore, it will not work
-    #        unless these are pulled from the other end
+    #        a pipe, and has a maximum size limit.  Therefore, it will not 
+    #        work unless these are pulled from the other end
     #    -Note: the get() will, by default, wait until there is an item ready
     #        with no timeout
     trained_networks = [results_queue.get() for _ in range(num_processes-1)]
@@ -423,8 +425,8 @@ def _parallel_train_worker(network, trainer, training_examples,
     """
     trainer.train(network, training_examples, iterations, unsupervised)
     if return_results_on_queue:
-        # return this trained network back to the main process by placing it on
-        #    the queue
+        # return this trained network back to the main process by placing it 
+        #    on the queue
         results_queue.put(network)
 
 
