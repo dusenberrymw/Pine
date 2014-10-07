@@ -135,6 +135,11 @@ class Neuron(object):
         Given an input vector from previous layer neurons, compute the output 
             of the neuron in a forward pass
 
+        Explanation:
+
+            self.output = f(z), where z = w1x1 + w2x2 + ... + wnxn + thresh
+                                and f() is the activation function
+
         """
         # keep track of what inputs were sent to this neuron
         self.input_vector = input_vector
@@ -150,16 +155,25 @@ class Neuron(object):
         """
         Given an error gradient from the downstream layer, calculate the
             gradients (error) for each of the parameters (weights & threshold)
+            and add to the existing gradients (for batch purposes)
+
+        Explanation:
+
+            self.output = f(z), where z = w1x1 + w2x2 + ... + wnxn + thresh
+
+            Therefore, the derivative of the output wrt weight i is:
+            
+                doutput/dwi = f'(z) * dz/dwi, where dz/dwi = xi
+                
+            The gradient ("downstream error") is passed in and multiplied by
+                the derivative wrt to a weight to compute the gradient for 
+                that weight.
 
         """
-        # **ADD SOME EXPLANATION FOR THIS**
         chain_gradient = downstream_gradient * self.activation_function.derivative(self.output)
-        # weight gradients
         for i in range(len(self.weights)):
             self.weight_gradients[i] = chain_gradient * self.input_vector[i]
-        # threshold gradient
         self.threshold_gradient = chain_gradient # * 1
-        # input gradients
         input_gradients = [0]*len(self.input_vector)
         for i in range(len(self.input_vector)):
             input_gradients[i] = chain_gradient * self.weights[i]
