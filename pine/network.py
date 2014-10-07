@@ -128,7 +128,7 @@ class Neuron(object):
         self.threshold = random.uniform(-0.9,0.9)
         # gradients
         self.weight_gradients = [0]*num_inputs
-        self.threshold_gradient = [0]
+        self.threshold_gradient = 0
 
     def forward(self, input_vector):
         """
@@ -155,7 +155,8 @@ class Neuron(object):
         """
         Given an error gradient from the downstream layer, calculate the
             gradients (error) for each of the parameters (weights & threshold)
-            and add to the existing gradients (for batch purposes)
+            and add to the existing corresponding gradients (for batch 
+            purposes).
 
         Explanation:
 
@@ -172,8 +173,8 @@ class Neuron(object):
         """
         chain_gradient = downstream_gradient * self.activation_function.derivative(self.output)
         for i in range(len(self.weights)):
-            self.weight_gradients[i] = chain_gradient * self.input_vector[i]
-        self.threshold_gradient = chain_gradient # * 1
+            self.weight_gradients[i] += chain_gradient * self.input_vector[i]
+        self.threshold_gradient += chain_gradient#* 1, b/c thresh 'input' = 1
         input_gradients = [0]*len(self.input_vector)
         for i in range(len(self.input_vector)):
             input_gradients[i] = chain_gradient * self.weights[i]
