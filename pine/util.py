@@ -110,11 +110,11 @@ def create_neuron(num_inputs, activation_function_name):
 
     """
     if activation_function_name == "logistic":
-        act_func = pine.training.LogisticActivationFunction()
+        act_func = pine.activation.Logistic()
     elif activation_function_name == "tanh":
-        act_func = pine.training.TanhActivationFunction()
+        act_func = pine.activation.Tanh()
     else:
-        act_func = pine.training.LinearActivationFunction()
+        act_func = pine.activation.Linear()
     neuron = pine.network.Neuron(num_inputs, act_func)
     return neuron
 

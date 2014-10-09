@@ -11,6 +11,7 @@ import pickle
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
+import pine.activation
 import pine.data
 import pine.network
 import pine.training
@@ -66,7 +67,7 @@ else:
     try:
         act_funcs = [f.lower() for f in args.activation_functions.split(",")]
         for f in act_funcs:
-            if f not in ['logistic', 'tanh', 'linear']:
+            if not pine.activation.isValidFunction(f):
                 print("\nError: activation functions must be one of the following: 'logistic', 'tanh', 'linear'")
                 exit()
     except:# ValueError:

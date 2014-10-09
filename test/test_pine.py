@@ -12,6 +12,7 @@ import unittest
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
 # import pine.data
+import pine.activation
 import pine.network
 import pine.training
 import pine.util
@@ -20,7 +21,7 @@ import pine.util
 class TestNetwork(unittest.TestCase):
     """Testing for network.py"""
     def setUp(self):
-        self.act_func = pine.training.LogisticActivationFunction()
+        self.act_func = pine.activation.Logistic()
         self.input_vector = [5,6,7]
 
         self.neuron = pine.network.Neuron(3, self.act_func)
@@ -126,6 +127,17 @@ class TestUtil(unittest.TestCase):
     def tearDown(self):
         pass
 
+class TestActivation(unittest.TestCase):
+    """Testing for activation"""
+    def setUp(self):
+        pass
+
+    def test_isValidFunctionName(self):
+        self.assertTrue(pine.activation.isValidFunction("logistic"))
+        self.assertFalse(pine.activation.isValidFunction("test"))
+
+    def tearDown(self):
+        pass
 
 class TestMODULE(unittest.TestCase):
     """Testing for MODULE"""
