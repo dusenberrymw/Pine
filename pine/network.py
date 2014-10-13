@@ -58,6 +58,22 @@ class Network(object):
         cost_gradient_vector = self.layers[-1].cost_gradient(target_output_vector)
         return cost_gradient_vector
 
+    def reset_gradients():
+        """
+        Set all parameter gradients to 0
+
+        """
+        for layer in self.layers:
+            layer.reset_gradients()
+
+    def update_parameters(learning_rate):
+        """
+        Adjust the weights and threshold down the gradient to reduce error
+
+        """
+        for layer in self.layers:
+            layer.update_parameters(learning_rate)
+
 
 class Layer(object):
     """A class for layers in the network"""
@@ -113,6 +129,22 @@ class Layer(object):
                                 for neuron, target_output
                                 in zip(self.neurons, target_output_vector)]
         return cost_gradient_vector
+
+    def reset_gradients():
+        """
+        Set all parameter gradients to 0
+
+        """
+        for neuron in self.neurons:
+            neuron.reset_gradients()
+
+    def update_parameters(learning_rate):
+        """
+        Adjust the weights and threshold down the gradient to reduce error
+
+        """
+        for neuron in self.neurons:
+            neuron.update_parameters(learning_rate)
 
 
 class Neuron(object):
@@ -200,3 +232,22 @@ class Neuron(object):
         """
         cost_gradient = self.activation_function.cost_derivative(self.output, target_output)
         return cost_gradient
+
+    def reset_gradients():
+        """
+        Set all parameter gradients to 0
+
+        """
+        self.weight_gradients = [0]*len(self.weight_gradients)
+        self.threshold_gradient = 0
+
+    def update_parameters(learning_rate):
+        """
+        Adjust the weights and threshold down (opposite sign of) the gradient
+            to reduce error
+
+        """
+        for i in range(len(self.weights)):
+            self.weights[i] -= learning_rate * self.weight_gradients[i] 
+        self.threshold -= learning_rate * self.threshold_gradient 
+

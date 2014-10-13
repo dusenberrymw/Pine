@@ -111,6 +111,14 @@ class TestNetwork(unittest.TestCase):
                 # print("t difference: {}".format(diff))
                 neuron.threshold = old_theta
 
+    def test_reset_gradients(self):
+        network = pine.util.create_network([3,5,2], ['logistic']*2)
+        for layer in network.layers:
+            for neuron in layer.neurons:
+                for grad in neuron.weight_gradients:
+                    self.assertEqual(grad, 0)
+                self.assertEqual(neuron.threshold_gradient, 0)
+
     def tearDown(self):
         pass
 
