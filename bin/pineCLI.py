@@ -15,6 +15,7 @@ import pine.activation
 import pine.data
 import pine.network
 import pine.training
+import pine.trainer
 import pine.util
 
 parser = argparse.ArgumentParser(description='Pine: Python Neural Network')
@@ -35,6 +36,7 @@ parser.add_argument('-af','--activation_functions', help='activation function na
 parser.add_argument('-l', '--learning_rate', type=float, default=0.05)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
+parser.add_argument('-bs', '--batch_size', type=int, default=1)
 parser.add_argument('-f', '--model_output', default=None, type=argparse.FileType('wb'))
 parser.add_argument('-i', '--model_input', default=None, type=argparse.FileType('rb'))
 parser.add_argument('-t', '--testing', action='store_true', default=False)
@@ -44,6 +46,7 @@ parser.add_argument('-pf', '--predictions_file', default=None, type=argparse.Fil
 parser.add_argument('-np', '--num_processes', type=int, default=None,
                     help='add to limit program to a certain number of processes')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
+parser.add_argument('--legacy', action='store_true', default=False)
 
 # get args from command line
 args = parser.parse_args()
@@ -64,15 +67,17 @@ else:
     except ValueError:
         print("\nError: Network layout must be in format: #[,#[,...]],# beginning with input layer, and ending in output layer")
         exit()
-    try:
-        act_funcs = [f.lower() for f in args.activation_functions.split(",")]
-        for f in act_funcs:
-            if not pine.util.isValidFunction(f):
-                print("\nError: activation functions must be one of the following: 'logistic', 'tanh', 'linear'")
-                exit()
-    except:# ValueError:
-        print("\nError: Activation functions must be in format: name[,name[,...]],name beginning with hidden layer 1, and ending in output layer")
-        # exit()
+    if args.activation_functions: 
+        try:
+            act_funcs = [f.lower() for f in args.activation_functions.split(",")]
+            for f in act_funcs:
+                if not pine.util.isValidFunction(f):
+                    print("\nError: activation functions must be one of the following: 'logistic', 'tanh', 'linear'")
+                    exit()
+        except ValueError:
+            print("\nError: Activation functions must be in format: name[,name[,...]],name beginning with hidden layer 1, and ending in output layer")
+            exit()
+    else:
         act_funcs = ['logistic']*(len(network_layout)-1)
     network = pine.util.create_network(network_layout, act_funcs)
 
@@ -90,10 +95,10 @@ if args.only_predict:
     if args.predictions_file:
         writer = csv.writer(args.predictions_file)
     for example in examples:
-        hypothesis_vector = network.forward(example[1])
+        hypothesis_vector = network.forward(example[0])
         if args.verbose:
             print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
-                format(example[1], example[0], hypothesis_vector))
+                format(example[0], example[1], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
 
@@ -102,24 +107,34 @@ elif args.testing:
     if args.predictions_file:
         writer = csv.writer(args.predictions_file)
     for example in examples:
-        hypothesis_vector = network.forward(example[1])
+        hypothesis_vector = network.forward(example[0])
         if args.verbose:
             print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
-                  format(example[1], example[0], hypothesis_vector))
+                  format(example[0], example[1], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
-    error = pine.util.calculate_RMS_error(network, examples)
-    print('RMS Error w/ Testing Data: {0}'.format(error))
+    cost = pine.util.calculate_average_cost_legacy(network, examples)
+    print('Cost w/ Testing Data: {0}'.format(cost))
 
 else: # train
     # now train on the examples
-    trainer = pine.training.Backpropagation(args.learning_rate, args.momentum)
-#    for i in range(args.passes):
-    pine.training.parallel_train(network, trainer, examples, args.passes,
-                            args.unsupervised, args.num_processes)
-    # and print error
-    error = pine.util.calculate_RMS_error(network, examples)
-    print('RMS Error w/ Training Data: {0}'.format(error))
+    if args.legacy:
+        trainer = pine.training.Backpropagation(args.learning_rate, args.momentum)
+        pine.training.parallel_train(network, trainer, examples, args.passes,
+                                args.unsupervised, args.num_processes)
+    else:
+        trainer = pine.trainer.SGD(args.learning_rate)
+        if args.verbose:
+            for i in range(args.passes):
+                trainer.train(network, examples, 1, args.batch_size)#args.passes)
+                cost = pine.util.calculate_average_cost_legacy(network, examples)
+                print('Pass:{}, Cost {}'.format(i+1, cost))
+        else:
+            trainer.train(network, examples, args.batch_size, args.passes)
+
+    # and print cost
+    cost = pine.util.calculate_average_cost_legacy(network, examples)
+    print('Cost w/ Training Data: {0}'.format(cost))
     if args.model_output:
         # save the network
         pickle.dump(network, args.model_output)
@@ -131,5 +146,5 @@ else: # train
         # write the predictions
         writer = csv.writer(args.predictions_file)
         for example in examples:
-            hypothesis_vector = network.forward(example[1])
+            hypothesis_vector = network.forward(example[0])
             writer.writerow(hypothesis_vector)

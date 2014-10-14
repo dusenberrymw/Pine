@@ -33,7 +33,7 @@ def iris_data():
             target_vector = [0,1,0]
         elif output == 'Iris-virginica':
             target_vector = [0,0,1]
-        examples.append([target_vector, input_vector])
+        examples.append([input_vector,target_vector])
 
     # take 2/3 of items to train for better learning
     training_examples = examples[::3] + examples[1::3]
@@ -62,7 +62,7 @@ def letter_recognition_data():
         number = ord(character) - 96 # ascii - 96 = letter number
         target_vector = [0] * 26 # 26 letters
         target_vector[number-1] = 1 # set to 1
-        examples.append([target_vector, input_vector])
+        examples.append([input_vector,target_vector])
 
     # # train on first 16000
     # training_inputs = inputs[:16000]
@@ -81,7 +81,7 @@ def xor_data():
     """Return a data object containing the training and testing data for the
     XOR logic test project
     """
-    data = [ [[0],[0,0]], [[1],[1,0]], [[1],[0,1]], [[0],[1,1]] ]
+    data = [ [[0,0],[0]], [[1,0],[1]], [[0,1],[1]], [[1,1],[0]] ]
     training_examples = data[:]
     testing_examples = data[:]
     return training_examples, testing_examples
@@ -95,3 +95,4 @@ def and_data():
     training_examples = data[:]
     testing_examples = data[:]
     return training_examples, testing_examples
+

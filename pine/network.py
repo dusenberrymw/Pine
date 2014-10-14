@@ -58,7 +58,7 @@ class Network(object):
         cost_gradient_vector = self.layers[-1].cost_gradient(target_output_vector)
         return cost_gradient_vector
 
-    def reset_gradients():
+    def reset_gradients(self):
         """
         Set all parameter gradients to 0
 
@@ -66,13 +66,13 @@ class Network(object):
         for layer in self.layers:
             layer.reset_gradients()
 
-    def update_parameters(learning_rate):
+    def update_parameters(self, batch_size, learning_rate):
         """
         Adjust the weights and threshold down the gradient to reduce error
 
         """
         for layer in self.layers:
-            layer.update_parameters(learning_rate)
+            layer.update_parameters(batch_size, learning_rate)
 
 
 class Layer(object):
@@ -130,7 +130,7 @@ class Layer(object):
                                 in zip(self.neurons, target_output_vector)]
         return cost_gradient_vector
 
-    def reset_gradients():
+    def reset_gradients(self):
         """
         Set all parameter gradients to 0
 
@@ -138,13 +138,13 @@ class Layer(object):
         for neuron in self.neurons:
             neuron.reset_gradients()
 
-    def update_parameters(learning_rate):
+    def update_parameters(self, batch_size, learning_rate):
         """
         Adjust the weights and threshold down the gradient to reduce error
 
         """
         for neuron in self.neurons:
-            neuron.update_parameters(learning_rate)
+            neuron.update_parameters(batch_size, learning_rate)
 
 
 class Neuron(object):
@@ -233,7 +233,7 @@ class Neuron(object):
         cost_gradient = self.activation_function.cost_derivative(self.output, target_output)
         return cost_gradient
 
-    def reset_gradients():
+    def reset_gradients(self):
         """
         Set all parameter gradients to 0
 
@@ -241,13 +241,16 @@ class Neuron(object):
         self.weight_gradients = [0]*len(self.weight_gradients)
         self.threshold_gradient = 0
 
-    def update_parameters(learning_rate):
+    def update_parameters(self, batch_size, learning_rate):
         """
-        Adjust the weights and threshold down (opposite sign of) the gradient
-            to reduce error
+        Update each neuron's weights and threshold value by subtracting the
+            average gradient multiplied by the learning rate, alpha.  Subtract
+            because the gradient will give direction of cost increase, and 
+            we want to move in the opposite direction (gradient descent) in 
+            order to lower the overall error (minimize the cost function, J).
 
         """
         for i in range(len(self.weights)):
-            self.weights[i] -= learning_rate * self.weight_gradients[i] 
-        self.threshold -= learning_rate * self.threshold_gradient 
+            self.weights[i] -= learning_rate * (self.weight_gradients[i]/batch_size)
+        self.threshold -= learning_rate * (self.threshold_gradient/batch_size)
 

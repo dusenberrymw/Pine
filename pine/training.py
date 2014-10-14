@@ -25,8 +25,8 @@ class Backpropagation(object):
 
     def train(self, network, training_examples, iterations, unsupervised=False):
         """This trains the given network using the given example vectors
-        of input data (index 1 for each example) against the associated
-        target output(s) (index 0 for each example)
+        of input data (index 0 for each example) against the associated
+        target output(s) (index 1 for each example)
 
         Essentially look forward to determine error, then look backward to
             change weights and threshold values (which are currently stored
@@ -70,8 +70,8 @@ class Backpropagation(object):
             random.shuffle(training_examples)
             # for each row of data
             for training_example in training_examples:
-                target_output_vector = training_example[0]
-                input_vector = training_example[1]
+                input_vector = training_example[0]
+                target_output_vector = training_example[1]
                 # prime the network on this row of input data
                 #    -this will cause output (activation) values to be
                 #     set for each neuron

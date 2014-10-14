@@ -5,6 +5,7 @@ Created on Sept 9, 2014
 '''
 import math
 import pine.network
+import pine.activation
 
 
 def calculate_RMS_error(network, examples):
@@ -26,9 +27,9 @@ def calculate_RMS_error(network, examples):
     # num_values = 0
     # # for each row of data
     # for example in examples:
-    #     computed_output_vector = network.forward(example[1])
+    #     computed_output_vector = network.forward(example[0])
     #     for target_output, computed_output in \
-    #             zip(example[0], computed_output_vector):
+    #             zip(example[1], computed_output_vector):
     #         residual = target_output - computed_output
     #         error += residual*residual  # square the residual value
     #         num_values += 1 # keep count of number of value
@@ -37,10 +38,9 @@ def calculate_RMS_error(network, examples):
     return calculate_average_cost_legacy(network, examples)
 
 def calculate_average_cost_legacy(network, examples):
-    target_vectors = [example[0] for example in examples]
-    input_vectors = [example[1] for example in examples]
+    input_vectors = [example[0] for example in examples]
+    target_vectors = [example[1] for example in examples]
     return calculate_average_cost(network, target_vectors, input_vectors)
-
 
 
 def calculate_average_cost(network, target_vectors, input_vectors):

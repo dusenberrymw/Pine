@@ -12,7 +12,7 @@ def parse_data(data_file, only_predict=False):
         "[target1[,target2[,...]]] | input1[,input2[,...]]"
 
     """
-    # make a regex that looks for the above pattern, and captures the
+    # Make a regex that looks for the above pattern, and captures the
     #    targets list (separated with commas) and inputs list (separated
     #    with commas).
     # Note: The '?:' part causes the group (which is defined within the
@@ -32,7 +32,7 @@ def parse_data(data_file, only_predict=False):
             else:  # file contains targets
                 target_vector = [float(value) for value in match.group(1).split(",")]
             input_vector = [float(value) for value in match.group(2).split(",")]
-            examples.append([target_vector,input_vector])
+            examples.append([input_vector,target_vector])
             row_index += 1
         except:
             print("Error on row #{0}: '{1}'".format(row_index, row))
