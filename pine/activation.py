@@ -5,11 +5,6 @@ Created on Oct 9, 2014
 '''
 import math
 
-def isValidFunction(name):
-    functionNames = ["logistic", "tanh", "linear"]
-    return name.lower() in functionNames
-
-
 class Logistic(object):
     """The Logistic (Sigmoid) activation function, which is one of the
         possibilities that can be used by the network

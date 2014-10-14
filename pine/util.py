@@ -119,6 +119,11 @@ def create_neuron(num_inputs, activation_function_name):
     return neuron
 
 
+def isValidFunction(name):
+    functionNames = ["logistic", "tanh", "linear"]
+    return name.lower() in functionNames
+
+
 def print_network_error(network, training_data, testing_data):
     """Print the current error for the given network"""
     error = calculate_average_cost_legacy(network, training_data)
