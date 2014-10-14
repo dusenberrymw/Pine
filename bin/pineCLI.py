@@ -9,13 +9,13 @@ import csv
 import math
 import os.path
 import pickle
+import random
 import sys
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 
 import pine.activation
 import pine.data
 import pine.network
-import pine.training
 import pine.trainer
 import pine.util
 
@@ -121,8 +121,8 @@ else: # train
     # now train on the examples
     if args.trainer.lower() == "backpropagation":
         # older backprop trainer with most logic in the train function
-        trainer = pine.training.Backpropagation(args.learning_rate, args.momentum)
-        pine.training.parallel_train(network, trainer, examples, args.passes,
+        trainer = pine.trainer.Backpropagation(args.learning_rate, args.momentum)
+        pine.trainer.parallel_train(network, trainer, examples, args.passes,
                                 args.unsupervised, args.num_processes)
     else:
         # new backprop (SGD) trainer with most logic in the network functions

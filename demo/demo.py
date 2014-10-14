@@ -15,7 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 import demo_data
 import pine.network
-import pine.training
+import pine.trainer
 import pine.util
 
 # constants for the different projects
@@ -57,14 +57,14 @@ def main(project):
     pine.util.print_network_error(network, training_data, testing_data)
 
     # train the network
-    trainer = pine.training.Backpropagation(params['learning_rate'],
+    trainer = pine.trainer.Backpropagation(params['learning_rate'],
                                        params['momentum_coef'])
 
     i = 0
 #     error = pine.util.calculate_average_cost(network, params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
     while ((i*params['iterations'])<2000):#& (error > params['min_error']):
-        pine.training.parallel_train(network, trainer, training_data, iterations,
+        pine.trainer.parallel_train(network, trainer, training_data, iterations,
                                 num_processes)
 #         trainer.train(network, data.training_inputs, data.training_target_outputs, iterations)
 
@@ -163,7 +163,7 @@ def test_run(network, params):
 
     # Train the network
     print('\nWill train for {0} iterations'.format(params['iterations']))
-    trainer = pine.training.Backpropagation()
+    trainer = pine.trainer.Backpropagation()
     trainer.train(network, params['data'].training_inputs,
                   params['data'].training_target_outputs,
                   params['learning_rate'], params['momentum_coef'],

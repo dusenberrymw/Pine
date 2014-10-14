@@ -14,7 +14,7 @@ sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 # import pine.data
 import pine.activation
 import pine.network
-import pine.training
+import pine.trainer
 import pine.util
 
 # network.py
