@@ -3,53 +3,19 @@ Created on Sept 9, 2014
 
 @author: dusenberrymw
 '''
-import math
 import pine.network
 import pine.activation
 
 
-def calculate_RMS_error(network, examples):
-    """Determine the root mean square (RMS) error of the network for the given
-    dataset (multiple rows) of input data against the associated target outputs
-
-    RMS error is the square root of: the sum of the squared differences
-    between target outputs and actual outputs, divided by the total number
-    of values.  It is useful because it eliminates the need to take
-    absolute values, which would be necessary otherwise to prevent two
-    opposite errors from canceling out.
-
-    error = sqrt( (sum(residual^2)) / num_values )
-
-    examples are in the format: [[target_vector], [input_vector]]
-
-    """
-    # error = 0.0
-    # num_values = 0
-    # # for each row of data
-    # for example in examples:
-    #     computed_output_vector = network.forward(example[0])
-    #     for target_output, computed_output in \
-    #             zip(example[1], computed_output_vector):
-    #         residual = target_output - computed_output
-    #         error += residual*residual  # square the residual value
-    #         num_values += 1 # keep count of number of value
-    # # average the error and take the square root
-    # return math.sqrt(error/num_values)
-    return calculate_average_cost_legacy(network, examples)
-
-def calculate_average_cost_legacy(network, examples):
-    input_vectors = [example[0] for example in examples]
-    target_vectors = [example[1] for example in examples]
-    return calculate_average_cost(network, target_vectors, input_vectors)
-
-
-def calculate_average_cost(network, target_vectors, input_vectors):
+def calculate_average_cost(network, examples): 
     """
     Calculate the network's average cost over the given examples
 
     """
     cost_vector = []
-    for target_vector, input_vector in zip(target_vectors, input_vectors):
+    for example in examples:
+        input_vector = example[0]
+        target_vector = example[1]
         network.forward(input_vector)
         cost = network.cost(target_vector)
         cost_vector.append(cost)
@@ -126,9 +92,9 @@ def isValidFunction(name):
 
 def print_network_error(network, training_data, testing_data):
     """Print the current error for the given network"""
-    error = calculate_average_cost_legacy(network, training_data)
+    error = calculate_average_cost(network, training_data)
     print('Avg cost w/ Training Data: {0}'.format(error))
-    error = calculate_average_cost_legacy(network, testing_data)
+    error = calculate_average_cost(network, testing_data)
     print('Avg cost w/ Test Data: {0}'.format(error))
 
 
@@ -139,3 +105,4 @@ def print_network_outputs(network, testing_data):
         print('Input: {0}, Target Output: {1}, Actual Output: {2}'.
               format(testing_data[i][1], testing_data[i][0],
                      outputs))
+

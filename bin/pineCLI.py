@@ -6,6 +6,7 @@ Created on Jul 22, 2013
 '''
 import argparse
 import csv
+import math
 import os.path
 import pickle
 import sys
@@ -33,7 +34,7 @@ parser.add_argument('network_layout', help='number of nodes in each layer \
                                             output node.')
 parser.add_argument('-af','--activation_functions', help='activation function names for \
                                                  hidden and output nodes')
-parser.add_argument('-l', '--learning_rate', type=float, default=0.05)
+parser.add_argument('-l', '--learning_rate', type=float, default=0.01)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
 parser.add_argument('-bs', '--batch_size', type=int, default=1)
@@ -46,7 +47,7 @@ parser.add_argument('-pf', '--predictions_file', default=None, type=argparse.Fil
 parser.add_argument('-np', '--num_processes', type=int, default=None,
                     help='add to limit program to a certain number of processes')
 parser.add_argument('-v', '--verbose', action='store_true', default=False)
-parser.add_argument('--legacy', action='store_true', default=False)
+parser.add_argument('--trainer', default="SGD")
 
 # get args from command line
 args = parser.parse_args()
@@ -113,27 +114,29 @@ elif args.testing:
                   format(example[0], example[1], hypothesis_vector))
         if args.predictions_file:
             writer.writerow(hypothesis_vector)
-    cost = pine.util.calculate_average_cost_legacy(network, examples)
+    cost = pine.util.calculate_average_cost(network, examples)
     print('Cost w/ Testing Data: {0}'.format(cost))
 
 else: # train
     # now train on the examples
-    if args.legacy:
+    if args.trainer.lower() == "backpropagation":
+        # older backprop trainer with most logic in the train function
         trainer = pine.training.Backpropagation(args.learning_rate, args.momentum)
         pine.training.parallel_train(network, trainer, examples, args.passes,
                                 args.unsupervised, args.num_processes)
     else:
+        # new backprop (SGD) trainer with most logic in the network functions
         trainer = pine.trainer.SGD(args.learning_rate)
         if args.verbose:
             for i in range(args.passes):
-                trainer.train(network, examples, 1, args.batch_size)#args.passes)
-                cost = pine.util.calculate_average_cost_legacy(network, examples)
+                trainer.train(network, examples, args.batch_size, 1)
+                cost = pine.util.calculate_average_cost(network, examples)
                 print('Pass:{}, Cost {}'.format(i+1, cost))
         else:
             trainer.train(network, examples, args.batch_size, args.passes)
 
     # and print cost
-    cost = pine.util.calculate_average_cost_legacy(network, examples)
+    cost = pine.util.calculate_average_cost(network, examples)
     print('Cost w/ Training Data: {0}'.format(cost))
     if args.model_output:
         # save the network

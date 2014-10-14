@@ -61,7 +61,7 @@ def main(project):
                                        params['momentum_coef'])
 
     i = 0
-#     error = pine.util.calculate_RMS_error(network, params['data'].training_inputs,
+#     error = pine.util.calculate_average_cost(network, params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
     while ((i*params['iterations'])<2000):#& (error > params['min_error']):
         pine.training.parallel_train(network, trainer, training_data, iterations,
@@ -70,10 +70,10 @@ def main(project):
 
         # check the new error on the master network
         print("\nMaster Network:")
-        error = pine.util.calculate_RMS_error(network, testing_data)
-        print('RMS Error w/ Test Data: {0}'.format(error))
+        error = pine.util.calculate_average_cost(network, testing_data)
+        print('Cost w/ Test Data: {0}'.format(error))
 #         pine.util.print_network_error(network, training_data, testing_data)
-#         error = pine.util.calculate_RMS_error(network, params['data'].training_inputs,
+#         error = pine.util.calculate_average_cost(network, params['data'].training_inputs,
 #                                     params['data'].training_target_outputs)
         print("Iteration number: {0}".format((i+1)*params['iterations']))
         i +=1
