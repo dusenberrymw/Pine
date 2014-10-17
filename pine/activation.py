@@ -18,9 +18,10 @@ class Logistic(object):
         This will only return values between 0 and 1
         """
         try:
-            return 1.0 / (1 + math.exp(-1.0*input_value))
+            return 1 / (1 + math.exp(-1*input_value))
         except OverflowError:
             # bound the numbers if there is an overflow
+            print("overflow")
             if input_value < 0:
                 return 0.0000000000001 #logistic func goes to 0 for small x
             else:
@@ -34,7 +35,7 @@ class Logistic(object):
 
         F(x) will be passed in for efficiency
         """
-        return fx*(1.0-fx)
+        return fx*(1-fx)
 
     def inverse(self, input_value):
         """This will produce the inverse of the sigmoid function, which is
@@ -57,10 +58,12 @@ class Logistic(object):
         This cost function essentially allows for no error if the hypothesis
             is equal to the target y, and high error otherwise
 
+        Note: 'log' is the natural log
+
         """
         y = target_output
-        h_x = hypothesis_output
-        c = -y*math.log10(h_x)-(1-y)*math.log10(1-h_x)
+        hx = hypothesis_output
+        c = -y*math.log(hx) - (1-y)*math.log(1-hx)
         return c
 
     def cost_derivative(self, hypothesis_output, target_output):
@@ -70,12 +73,10 @@ class Logistic(object):
         This will basically determine how much the hypothesis (output of the
             neuron) contributed to the cost ("error") of the neuron
 
-        Note: math.log is ln
-
         """
         y = target_output
-        h_x = hypothesis_output
-        dc = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) 
+        hx = hypothesis_output
+        dc = (y-1)/(hx-1) - y/hx 
         return dc
 
 
@@ -110,8 +111,8 @@ class Tanh(object):
 
         """
         y = target_output
-        h_x = hypothesis_output
-        c = (1/2)*((h_x-y)**2)
+        hx = hypothesis_output
+        c = (1/2)*((hx-y)**2)
         return c
 
     def cost_derivative(self, hypothesis_output, target_output):
@@ -123,8 +124,8 @@ class Tanh(object):
 
         """
         y = target_output
-        h_x = hypothesis_output
-        dc = h_x - y
+        hx = hypothesis_output
+        dc = hx - y
         return dc
 
 
@@ -159,8 +160,8 @@ class Linear(object):
 
         """
         y = target_output
-        h_x = hypothesis_output
-        c = (1/2)*((h_x-y)**2)
+        hx = hypothesis_output
+        c = (1/2)*((hx-y)**2)
         return c
 
     def cost_derivative(self, hypothesis_output, target_output):
@@ -172,7 +173,7 @@ class Linear(object):
 
         """
         y = target_output
-        h_x = hypothesis_output
-        dc = h_x - y
+        hx = hypothesis_output
+        dc = hx - y
         return dc
 
