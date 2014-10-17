@@ -9,7 +9,7 @@ import pine.activation
 
 def calculate_average_cost(network, examples): 
     """
-    Calculate the network's average cost over the given examples
+    Calculate the network's average cost, J, over the given examples
 
     """
     cost_vector = []
