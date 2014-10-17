@@ -37,7 +37,7 @@ parser.add_argument('-af','--activation_functions', help='activation function na
 parser.add_argument('-l', '--learning_rate', type=float, default=0.01)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
-parser.add_argument('-bs', '--batch_size', type=int, default=1)
+parser.add_argument('-bs', '--batch_size', type=int)
 parser.add_argument('-f', '--model_output', default=None, type=argparse.FileType('wb'))
 parser.add_argument('-i', '--model_input', default=None, type=argparse.FileType('rb'))
 parser.add_argument('-t', '--testing', action='store_true', default=False)
@@ -118,6 +118,11 @@ elif args.testing:
     print('Cost w/ Testing Data: {0}'.format(cost))
 
 else: # train
+    if args.batch_size:
+        batch_size = args.batch_size
+    else:
+        batch_size = len(examples)
+    print(batch_size)
     # now train on the examples
     if args.trainer.lower() == "backpropagation":
         # older backprop trainer with most logic in the train function
@@ -129,11 +134,11 @@ else: # train
         trainer = pine.trainer.SGD(args.learning_rate)
         if args.verbose:
             for i in range(args.passes):
-                trainer.train(network, examples, args.batch_size, 1)
+                trainer.train(network, examples, batch_size, 1)
                 cost = pine.util.calculate_average_cost(network, examples)
                 print('Pass:{}, Cost {}'.format(i+1, cost))
         else:
-            trainer.train(network, examples, args.batch_size, args.passes)
+            trainer.train(network, examples, batch_size, args.passes)
 
     # and print cost
     cost = pine.util.calculate_average_cost(network, examples)
