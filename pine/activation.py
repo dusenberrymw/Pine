@@ -43,16 +43,16 @@ class Logistic(object):
         return math.log(input_value/(1-input_value))
 
     def cost(self, hypothesis_output, target_output):
-        """Cost function, J, of a node using the logistic activation function
+        """Cost function of a node using the logistic activation function
 
-        J_theta(h_theta(x), y) = -log(h_theta(x))   if y = 1
-                                 -log(1-h_theta(x)) if y = 0
+        cost(h_theta(x), y) = -log(h_theta(x))   if y = 1
+                              -log(1-h_theta(x)) if y = 0
             where h_theta(x) is the hypothesis (computed output) of the
                 node evaluated with respect to theta (parameter/weight vector)
                 evaluated at input x,
-            and J_theta is the "error" (cost) of the node with respect to
-                theta (parameter/weight vector) evaluated at the hypothesis 
-                of x given the target value y
+            and cost is the "error" of the node with respect to
+                hypothesis of x parameterized by theta (weights & threshold 
+                vectors) given the target value y
 
         This cost function essentially allows for no error if the hypothesis
             is equal to the target y, and high error otherwise
@@ -60,12 +60,12 @@ class Logistic(object):
         """
         y = target_output
         h_x = hypothesis_output
-        J = -y*math.log10(h_x)-(1-y)*math.log10(1-h_x)
-        return J
+        c = -y*math.log10(h_x)-(1-y)*math.log10(1-h_x)
+        return c
 
     def cost_derivative(self, hypothesis_output, target_output):
-        """Partial derivative of the cost function, J, of a neuron using the
-        logistic activation function
+        """Partial derivative of the cost function wrt the hypothesis of a 
+        neuron using the logistic activation function
 
         This will basically determine how much the hypothesis (output of the
             neuron) contributed to the cost ("error") of the neuron
@@ -75,8 +75,8 @@ class Logistic(object):
         """
         y = target_output
         h_x = hypothesis_output
-        dJ = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) 
-        return dJ
+        dc = ((y-1)/((h_x-1)*math.log(10))) - (y/(h_x*math.log(10))) 
+        return dc
 
 
 class Tanh(object):
@@ -104,19 +104,19 @@ class Tanh(object):
         return math.atanh(input_value)
 
     def cost(self, hypothesis_output, target_output):
-        """Cost function, J, of a node using the tanh activation function
+        """Cost function of a node using the tanh activation function
 
-        J_theta(h_theta(x), y) = (1/2)*(|h_theta(x)-y|^2)
+        cost(h_theta(x), y) = (1/2)*(|h_theta(x)-y|^2)
 
         """
         y = target_output
         h_x = hypothesis_output
-        # return (1/2)*(math.fabs(h_x-y)**2)
-        return (1/2)*((h_x-y)**2)
+        c = (1/2)*((h_x-y)**2)
+        return c
 
     def cost_derivative(self, hypothesis_output, target_output):
-        """Partial derivative of the cost function, J, of a neuron using the
-        tanh activation function
+        """Partial derivative of the cost function wrt the hypothesis of a 
+        neuron using the tanh activation function
 
         This will basically determine how much the hypothesis (output of the
             neuron) contributed to the cost ("error") of the neuron
@@ -124,8 +124,8 @@ class Tanh(object):
         """
         y = target_output
         h_x = hypothesis_output
-        dJ = h_x - y
-        return dJ
+        dc = h_x - y
+        return dc
 
 
 class Linear(object):
@@ -155,16 +155,17 @@ class Linear(object):
     def cost(self, hypothesis_output, target_output):
         """Cost function of a node using the Linear activation function
 
-        cost_theta(h_theta(x), y) = (1/2)*((h_theta(x)-y)^2)
+        cost(h_theta(x), y) = (1/2)*((h_theta(x)-y)^2)
 
         """
         y = target_output
         h_x = hypothesis_output
-        return (1/2)*((h_x-y)**2)
+        c = (1/2)*((h_x-y)**2)
+        return c
 
     def cost_derivative(self, hypothesis_output, target_output):
-        """Partial derivative of the cost function, J, of a neuron using the
-        linear activation function
+        """Partial derivative of the cost function wrt the hypothesis of a 
+        neuron using the linear activation function
 
         This will basically determine how much the hypothesis (output of the
             neuron) contributed to the cost ("error") of the neuron
@@ -172,5 +173,6 @@ class Linear(object):
         """
         y = target_output
         h_x = hypothesis_output
-        dJ = h_x - y
-        return dJ
+        dc = h_x - y
+        return dc
+
