@@ -13,6 +13,8 @@ Python3 installed (and accessible at '/usr/bin/env python3')
 ## Library
 View the pine/ directory -> everything should be pretty well documented
 
+Use 'python3 setup.py install' to install globally
+
 ## Command line script
 Use './bin/pineCLI.py' (add '-h' for help)
 
