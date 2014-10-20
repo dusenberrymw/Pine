@@ -133,10 +133,11 @@ else: # train
         # new backprop (SGD) trainer with most logic in the network functions
         trainer = pine.trainer.SGD(args.learning_rate)
         if args.verbose:
-            for i in range(args.passes):
-                trainer.train(network, examples, batch_size, 1)
+            batches = math.ceil(args.passes/batch_size)
+            for i in range(batches):
+                trainer.train(network, examples, batch_size, batch_size) 
                 cost = pine.util.calculate_average_cost(network, examples)
-                print('Pass:{}, Cost {}'.format(i+1, cost))
+                print('Batch:{}, Cost {}'.format(i+1, cost))
         else:
             trainer.train(network, examples, batch_size, args.passes)
 
