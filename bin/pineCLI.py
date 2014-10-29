@@ -72,7 +72,7 @@ else:
         try:
             act_funcs = [f.lower() for f in args.activation_functions.split(",")]
             for f in act_funcs:
-                if not pine.util.isValidFunction(f):
+                if not pine.util.is_valid_function(f):
                     print("\nError: activation functions must be one of the following: 'logistic', 'tanh', 'linear'")
                     exit()
         except ValueError:

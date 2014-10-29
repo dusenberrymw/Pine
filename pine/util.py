@@ -85,7 +85,7 @@ def create_neuron(num_inputs, activation_function_name):
     return neuron
 
 
-def isValidFunction(name):
+def is_valid_function(name):
     functionNames = ["logistic", "tanh", "linear"]
     return name.lower() in functionNames
 
