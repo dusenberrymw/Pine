@@ -177,10 +177,10 @@ class Neuron(object):
         self.input_vector = input_vector
         # multiply each input with the associated weight for that connection,
         #  then add the threshold value
-        local_output = (sum([x*y for x, y in zip(input_vector, self.weights)])
+        net_input = (sum([x*y for x, y in zip(input_vector, self.weights)])
                         + self.threshold)
-        # finally, use the activation function to determine the output
-        self.output = self.activation_function.activate(local_output)
+        # finally, use the activation function to compute the output
+        self.output = self.activation_function.activate(net_input)
         return self.output
 
     def backward(self, downstream_gradient):
@@ -203,7 +203,8 @@ class Neuron(object):
                 that weight.
 
         """
-        chain_gradient = downstream_gradient * self.activation_function.derivative(self.output)
+        chain_gradient = (downstream_gradient * 
+                          self.activation_function.derivative(self.output))
         for i in range(len(self.weights)):
             self.weight_gradients[i] += chain_gradient * self.input_vector[i]
         self.threshold_gradient += chain_gradient#* 1, b/c thresh 'input' = 1
