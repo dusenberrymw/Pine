@@ -129,9 +129,9 @@ class TestUtil(unittest.TestCase):
     def setUp(self):
         pass
 
-    def test_isValidFunctionName(self):
-        self.assertTrue(pine.util.isValidFunction("logistic"))
-        self.assertFalse(pine.util.isValidFunction("test"))
+    def test_is_valid_function(self):
+        self.assertTrue(pine.util.is_valid_function("logistic"))
+        self.assertFalse(pine.util.is_valid_function("test"))
 
     def tearDown(self):
         pass
