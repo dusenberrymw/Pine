@@ -131,15 +131,17 @@ else: # train
                                 args.unsupervised, args.num_processes)
     else:
         # new backprop (SGD) trainer with most logic in the network functions
-        trainer = pine.trainer.SGD(args.learning_rate)
+        trainer = pine.trainer.SGD()
         if args.verbose:
             batches = math.ceil(args.passes/batch_size)
             for i in range(batches):
-                trainer.train(network, examples, batch_size, batch_size) 
+                trainer.train(network, examples, args.learning_rate, 
+                              batch_size, batch_size) 
                 cost = pine.util.calculate_average_cost(network, examples)
                 print('Batch:{}, Cost {}'.format(i+1, cost))
         else:
-            trainer.train(network, examples, batch_size, args.passes)
+            trainer.train(network, examples, args.learning_rate, 
+                          batch_size, args.passes)
 
     # and print cost
     cost = pine.util.calculate_average_cost(network, examples)

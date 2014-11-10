@@ -11,20 +11,15 @@ class SGD(object):
     Class for the Stochastic Gradient Descent (backpropagation) trainer
     
     """
-    def __init__(self, learning_rate=0.01):
-        """ Constructor
-
-        Learning rate = degree to which the parameters (weight and threshold
-            values) will be changed during each parameter update 
-
-        """
-        self.learning_rate = learning_rate
-
-    def train(self, network, training_examples, batch_size=1, passes=1):
+    def train(self, network, training_examples, learning_rate, 
+              batch_size=1, passes=1):
         """
         Train the given network using the given example vectors
         of input data (index 1 for each example) against the associated
         target output(s) (index 0 for each example)
+
+        Learning rate = degree to which the parameters (weight and threshold
+            values) will be changed during each parameter update 
 
         """
         for _ in range(passes):
@@ -36,10 +31,10 @@ class SGD(object):
                 network.backward(network.cost_gradient(y))
                 if (i+1) % batch_size == 0:
                     # update every batch_size examples
-                    network.update_parameters(batch_size, self.learning_rate)
+                    network.update_parameters(learning_rate, batch_size)
                     network.reset_gradients()
             # update once more in case extra examples past last batch_update
-            network.update_parameters(batch_size, self.learning_rate)
+            network.update_parameters(learning_rate, batch_size)
             network.reset_gradients()
 
 
