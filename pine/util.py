@@ -42,8 +42,8 @@ def create_network(layout, activation_function_names):
 
     """
     network = pine.network.Network()
-    num_inputs = layout.pop(0) # we don't make objects for input neurons
-    for num_neurons, act_func_str in zip(layout, activation_function_names):
+    num_inputs = layout[0] # we don't make objects for input neurons
+    for num_neurons, act_func_str in zip(layout[1:], activation_function_names):
         layer = create_layer(num_neurons, num_inputs, act_func_str)
         network.layers.append(layer)
         num_inputs = num_neurons
