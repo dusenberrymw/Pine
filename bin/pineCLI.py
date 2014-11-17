@@ -35,6 +35,7 @@ parser.add_argument('network_layout', help='number of nodes in each layer \
 parser.add_argument('-af','--activation_functions', help='activation function names for \
                                                  hidden and output nodes')
 parser.add_argument('-l', '--learning_rate', type=float, default=0.01)
+parser.add_argument('-r', '--reg_lambda', type=float, default=0)
 parser.add_argument('-m', '--momentum', type=float, default=0.0)
 parser.add_argument('-p', '--passes', type=int, default=1)
 parser.add_argument('-bs', '--batch_size', type=int)
@@ -136,12 +137,12 @@ else: # train
             batches = math.ceil(args.passes/batch_size)
             for i in range(batches):
                 trainer.train(network, examples, args.learning_rate, 
-                              batch_size, batch_size) 
+                              args.reg_lambda, batch_size, batch_size) 
                 cost = pine.util.calculate_average_cost(network, examples)
                 print('Batch:{}, Cost {}'.format(i+1, cost))
         else:
             trainer.train(network, examples, args.learning_rate, 
-                          batch_size, args.passes)
+                          args.reg_lambda, batch_size, args.passes)
 
     # and print cost
     cost = pine.util.calculate_average_cost(network, examples)

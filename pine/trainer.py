@@ -12,7 +12,7 @@ class SGD(object):
     
     """
     def train(self, network, training_examples, learning_rate, 
-              batch_size=1, passes=1):
+              reg_lambda=0, batch_size=1, passes=1):
         """
         Train the given network using the given example vectors
         of input data (index 1 for each example) against the associated
@@ -31,10 +31,11 @@ class SGD(object):
                 network.backward(network.cost_gradient(y))
                 if (i+1) % batch_size == 0:
                     # update every batch_size examples
-                    network.update_parameters(learning_rate, batch_size)
+                    network.update_parameters(learning_rate, batch_size, 
+                                              reg_lambda)
                     network.reset_gradients()
             # update once more in case extra examples past last batch_update
-            network.update_parameters(learning_rate, batch_size)
+            network.update_parameters(learning_rate, batch_size, reg_lambda)
             network.reset_gradients()
 
 

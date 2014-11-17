@@ -7,7 +7,7 @@ import pine.network
 import pine.activation
 
 
-def calculate_average_cost(network, examples): 
+def calculate_average_cost(network, examples, reg_lambda=0): 
     """
     Calculate the network's average cost, J, over the given examples
 
@@ -17,7 +17,7 @@ def calculate_average_cost(network, examples):
         input_vector = example[0]
         target_vector = example[1]
         network.forward(input_vector)
-        cost = network.cost(target_vector)
+        cost = network.cost(target_vector, reg_lambda)
         cost_vector.append(cost)
     avg_cost = sum(cost_vector)/len(cost_vector)
     return avg_cost

@@ -37,15 +37,24 @@ class Network(object):
         upstream_gradient_vector = downstream_gradient_vector
         return upstream_gradient_vector
 
-    def cost(self, target_output_vector):
+    def cost(self, target_output_vector, reg_lambda=0):
         """
         Cost J ("error") of the network, which is the summation of the cost
             vector of the output layer, given the last input vector forward
             propagated through the network
 
+        reg_lambda is a regularization coefficient that is multiplied by the
+            sum of each theta^2 in the entire network.  Regularization serves
+            to push the theta values (weights) towards 0, thus limiting the
+            chance of overfitting.
+
         """
-        cost_vector = self.layers[-1].cost(target_output_vector)
-        cost = sum(cost_vector)
+        thetas_squared = 0;
+        for layer in self.layers:
+            for neuron in layer.neurons:
+                thetas_squared += sum([w**2 for w in neuron.weights])
+        cost = (sum(self.layers[-1].cost(target_output_vector))
+                + reg_lambda/2 * thetas_squared)
         return cost
 
     def cost_gradient(self, target_output_vector):
